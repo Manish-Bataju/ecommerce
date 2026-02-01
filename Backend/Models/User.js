@@ -47,7 +47,8 @@ const userSchema = new mongoose.Schema({
 
     otpDetails:{
         otp: {type: String,},
-        otpExpires: {type: Date}
+        otpExpires: {type: Date},
+        pendingEmail: String // This is crucial for your Email Swap logic
     },
     isVerified:{
         type: Boolean,

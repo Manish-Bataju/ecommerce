@@ -1,4 +1,6 @@
 import User from "../Models/User.js";
+import { sendEmail, sendSMS } from ".. /Utils/messagingUtils.js";
+
 
 export const sendOTP = async(req, res, next)=>{
     const {Mobile, Email} = req.body;
@@ -10,6 +12,7 @@ if(!user) return res.status(404).json({message: "Mobile number is not registered
 //2. Flexible Email Logic:
 //if the provided email is different. we prepare to update it but we dont block the user..
    let targetEmail = Email.toLowerCase();
+   const isNewEmail = user.Email !== targetEmail; // Define this variable!
 
 //3.  Generate a 6 digit OTP Code
 const otpCode = Math.floor(100000 + Math.random()* 900000).toString();
@@ -19,7 +22,7 @@ const expires = Date.now() + 5*60*1000; //code expires in 5 minutes
 user.otpDetails = {
     otp: otpCode,
     otpExpires: expires,
-    pendingEmail: isNewEmail ? targetEmail : null  // Store only if it's different
+    pendingEmail: targetEmail  // Store only if it's different
 };
 
 await user.save();
@@ -28,13 +31,17 @@ await user.save();
 
 
     await Promise.all([
+        
         //Send SMS (Replace with your SMS gateway like Sparrow SMS or Akash SMS)
         sendSMS (Mobile, `Your OTP code is: ${otpCode}`),
 
         //Send Email
         sendEmail(targetEmail, {
             subject: "Your Login OTP",
-            message: `Your code is ${otpCode}, If you entered a new Email, this will become ytour primary login. If you don't see it, check your Spam/Promotions`
+            message: `Your code is ${otpCode}. 
+            ${isNewEmail
+            ? "Since this is a new email, it will be updated on your profile after verification." 
+            : ""}`
         })
     ]);
 
@@ -51,4 +58,6 @@ await user.save();
 }
 
 };
+
+
 
