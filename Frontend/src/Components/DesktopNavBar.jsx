@@ -25,7 +25,9 @@ export default function DesktopNavBar() {
           <li key={cat.path} >
             <div className='flex flex-col items-center justify-center gap-.75 '>
              <NavLink to={cat.path} className={({isActive})=>
-            isActive ? 'inline-block font-semibold text-xl text-white border-b-2 border-mauve tracking-wider transition-all duration-200 ' : 'inline-block tracking-wider  hover:scale-110 hover:text-white'
+            isActive
+             ? 'inline-block font-semibold text-xl text-white border-b-2 border-mauve tracking-wider transition-all duration-200 ' 
+             : 'inline-block tracking-wider  hover:scale-110 hover:text-white'
           }>{cat.name}</NavLink>
           <span className='text-[.9rem] text-amber-200'>
             ({cat.age})
@@ -38,7 +40,7 @@ export default function DesktopNavBar() {
           <NavLink to="/clearance" className={({isActive})=> isActive? 'inline-block transition-transform duration-200 text-amber-200 text-xl font-semibold border-b-2 border-amber-200': 'inline-block transition-all duration-200 hover:scale-110 text-amber-200 hover:text-amber-200 hover:border-amber-200'}><em>CLEARANCE</em></NavLink></li>
     </ul>
           {/* Right Side: Nav Bar */}
-    <ul className="flex justify-center items-center gap-[clamp(1rem,2vw,2rem)]">
+    <ul className="flex justify-center items-center gap-[clamp(1rem,2vw,1.5rem)]">
       {/* Cart */}
       <NavLink to='/cart' className={({isActive})=>
       isActive ? 'inline-block font-semibold text-xl text-white border-b-2 pb-1 border-mauve tracking-wider transition-all duration-200 ' : 'inline-block tracking-wider  hover:scale-110 hover:text-white'}> <ShoppingCart/></NavLink>
