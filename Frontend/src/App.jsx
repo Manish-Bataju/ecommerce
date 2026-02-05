@@ -1,15 +1,18 @@
-import './App.css';
+import { BrowserRouter } from 'react-router-dom';
+import { AnnouncementBar } from './Components/AnnouncementBar.jsx';
 import './index.css';
+import Hero from './Components/Hero.jsx';
+import NavBar from './Components/NavBar.jsx';
 
 function App() {
-
-
   return (
-    <div className="flex h-screen items-center justify-center bg-zinc-900">
-      <button className="rounded-full bg-linear-to-r from-indigo-500 to-teal-400 px-8 py-3 font-bold text-white shadow-xl hover:scale-105 transition-transform">
-        Tailwind v4 Button
-      </button>
-    </div>
+    <BrowserRouter>
+      <AnnouncementBar/>
+      <NavBar/>
+      <main className="lg:pt-30"> 
+         <Hero />
+      </main>
+    </BrowserRouter>
   )
 }
 

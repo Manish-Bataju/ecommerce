@@ -1,12 +1,84 @@
-@import "tailwindcss/preflight";
-@import "tailwindcss/theme";
-@import "tailwindcss/utilities";
+@import "tailwindcss";
 
-html, body, #root {
-	height: 100%;
+/* Apply the canvas color to the entire app */
+@layer base {
+  html, body, #root {
+    height: 100%;
+    background-color: var(--color-canvas);
+    color: var(--color-espresso);
+    font-size: 1rem;
+    font-family: var(--font-body);
+    margin: 0;
+    padding: 0;
+  }
 }
-body {
-	margin: 0;
-	font-family: system-ui, sans-serif;
-	background: #fff;
+
+@theme {
+  --color-canvas: #FDFBF9;
+  --color-oatmeal: #F5F1ED;
+  --color-sage: #8E9775;
+  --color-rose: #D4A59A;
+  --color-espresso: #3a3530;
+  --color-umber: #5F5852;
+  --color-gold: #EBC06D;
+  --color-coral: #E87A7A;
+  --color-black: #000000;
+  --color-olive: #b7b6c1;
+  --color-green: #B4C4A4;
+  --color-mauve: #d9bbf9;
+  --color-navy: #003566;
+  --font-heading: "Montserrat", sans-serif;
+  --font-body: "Lora", sans-serif;
+  --radius-cloud: 40px;
+}
+
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 25s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+@keyframes marquee{
+  0% {transform: translateX(100%);} /*start of the line 100% means end of the width*/
+  100% {transform: translateX(-150%);} /*this is the end of the line which travels to beyond the starting Point*/
+}
+@media (max-width: 767px){
+.animate-marquee{  
+  display: flex;
+  white-space: nowrap;
+  /* 'will-change' hints to the browser to optimize this layer */
+  will-change: transform;
+  animation: marquee 15s linear infinite;
+}
 }
