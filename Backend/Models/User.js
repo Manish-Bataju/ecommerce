@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
         required: true,
     },
 
-    userName:{
+    UserName:{
         type: String,
 
     },  
@@ -56,9 +56,16 @@ const userSchema = new mongoose.Schema({
     },
     Role: {
     type: String,
-    enum:['Super User', 'Designer', 'Accountant', 'Customer', 'Guest'],
+    enum:['Super User', 'Designer', 'Accountant', 'Manager', 'Inventory', 'Sales', 'Delivery',  'Customer', 'Guest'],
     default: 'Guest', //If no role is specified, the Guest will be assigned the 'User' role by default.
     
+    },
+
+    Designation:{
+        type: String,
+        trim: true,
+        required: function(){
+                    return this.Role != 'Customer';} //return this.role only if the user is not a customer.
     },
     
 }, {timestamps: true}); // This will automatically add createdAt and updatedAt fields to the schema.

@@ -10,32 +10,42 @@ export const loginUser = async (req, res) => {
         if (!user) return res.status(404).json({ message: "Mobile number not found." });
 
         // --- BRANCH A: STAFF (Password Login) ---
-        if (user.Role !== 'User') {
-            // If the staff member hasn't sent a password yet, tell frontend to show password field
-            if (!Password) {
-                return res.status(200).json({ role: user.Role, needsPassword: true });
-            }
+        const staffRoles = ['Super User', 'Designer', 'Accountant', 'Manager', 'Inventory', 'Sales', 'Delivery' ]
 
-            // Verify Password
+        if (staffRoles.includes(user.Role)) {
+            // If the staff member hasn't sent a password yet, tell frontend to show password field
+            //1. First Time Login (SETUP)
+            if (!user.Password) {
+                return res.status(200).json({
+                    role: user.Role,
+                    needsPassword: true,
+                    message: "Welcome to the team! Please set your permanent password."});
+            }
+            // 2. RETURNING STAFF (Login)
+                // Check if they actually provided a password in the request
+                if (!Password) {
+                    return res.status(200).json({ role: user.Role, needsPassword: true });
+                }
+
+            // 3. Verify Password
             const isMatch = await matchPassword(Password, user.Password);
             if (!isMatch) {
                 return res.status(401).json({ message: "Invalid Staff credentials." });
             }
-
+            // 4. Success
             return res.status(200).json({
                 token: generateToken(user._id),
                 role: user.Role,
-                userName: user.userName
+                userName: user.UserName
             });
-        }
-
-        // --- BRANCH B: CUSTOMER (Background Checks & OTP Login) ---
-        if (user.Role === 'User') {
+        } else {
+           
+            // --- BRANCH B: CUSTOMER (Background Checks & OTP Login) ---
             
             // STEP 1: Background Check - User entered Mobile but no Email/OTP yet
             if (!Email && !otp) {
                 return res.status(200).json({ 
-                    role: 'User', 
+                    role: 'Customer', 
                     needsEmail: true, 
                     message: "Please enter your email to proceed." 
                 });
@@ -45,7 +55,7 @@ export const loginUser = async (req, res) => {
             if (Email && !otp) {
                 const emailMatches = user.Email === Email.toLowerCase();
                 return res.status(200).json({
-                    role: 'User',
+                    role: 'Customer',
                     emailMatches: emailMatches, // true if same, false if different
                     isNewEmail: !emailMatches,  // This is the "Condition" for your frontend
                     message: emailMatches 
@@ -82,7 +92,6 @@ export const loginUser = async (req, res) => {
                 });
             }
         }
-
         return res.status(400).json({ message: "Incomplete request." });
 
     } catch (error) {

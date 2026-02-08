@@ -29,7 +29,7 @@ await user.save();
 
 //5. Send to both Phone and New Email provided simultaneously
 
-
+    console.log(`DEBUG: OTP for ${Mobile} is [ ${otpCode} ]`);
     await Promise.all([
         
         //Send SMS (Replace with your SMS gateway like Sparrow SMS or Akash SMS)

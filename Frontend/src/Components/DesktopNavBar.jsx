@@ -18,7 +18,7 @@ export default function DesktopNavBar() {
   const cartCount = 0;
 
   return (
-    <div className='bg-navy text-white py-1.5 px-[clamp(0.5rem,3vw,3rem)] text-xl font-heading flex justify-between items-center shadow-[0_0_15px_rgba(0,0,0,0.2)]'>
+    <div className='bg-navy text-white py-1.5 px-[clamp(0.5rem,3vw,3rem)] text-xl font-heading flex justify-between shadow-[0_0_15px_rgba(0,0,0,0.2)]'>
 
       {/* LEFT SIDE: Logo */}
       <NavLink to='/'>
@@ -26,7 +26,7 @@ export default function DesktopNavBar() {
       </NavLink>
 
       {/* Middle: Navigation Bar */}
-      <ul className='flex justify-center gap-[clamp(1.5rem,3vw,4rem)]'>
+      <ul className='flex items-start gap-[clamp(1.5rem,3vw,4rem)]'>
         {categories.map((cat) => (
           <li key={cat.path}>
             <div className='flex flex-col items-center justify-center gap-0.5'>

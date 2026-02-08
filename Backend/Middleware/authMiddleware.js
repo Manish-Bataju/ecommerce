@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import User from '../Models/user.js'
+import User from '../Models/User.js'
 
 export const protect = async(req, res, next)=>{
     let token;
@@ -14,7 +14,7 @@ export const protect = async(req, res, next)=>{
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             //4. Attach user to request(inus the password)
-            req.user = await User.findById(decoded.id).select('-password');
+            req.user = await User.findById(decoded.id).select('-Password');
 
             // Move to the validator or controller
             next(); 
@@ -29,3 +29,12 @@ export const protect = async(req, res, next)=>{
         res.status(401).json({message: 'Not Authorized, no token'});
     }
 }
+
+export const adminOnly = (req, res, next) =>{
+    if(req.user && req.user.Role === 'Super User'){
+        next();
+    } else {
+        res.status(403).json({
+            message: 'Acess Denied. Admins Only' });
+    }
+};
