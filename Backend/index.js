@@ -3,7 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import productRouter from './Routes/productRoutes.js';
-import orderRouter from './Routes/orderRoutes.js'
+import orderRouter from './Routes/orderRoutes.js';
+import userRouter from './Routes/userRoutes.js';
 
 
 
@@ -19,11 +20,15 @@ app.get('/', (req, res) => {
     res.send('API is running....');
 });
 
-// 2. Mount the Product Routes:
+
+// 1. Mount the Product Routes:
 app.use('/api/v1/products', productRouter);
 
-//3. Mount the Order Routes
+//2. Mount the Order Routes
 app.use('/api/v1/orders', orderRouter);
+
+//3. Mount the User Routes
+app.use('/api/v1/users', userRouter);
 
 //----------------Database Connection Section------
 const ConnectDB = async () => {

@@ -1,4 +1,4 @@
-import { User } from './Models/User.js';
+import { User } from '../Models/User.js';
 import { matchPassword, generateToken } from '../Utils/authUtils.js'; // Assuming these exist
 
 export const loginUser = async (req, res) => {
@@ -99,3 +99,76 @@ export const loginUser = async (req, res) => {
         return res.status(500).json({ message: "Internal server error." });
     }
 };
+
+export const registerStaff= async(req, res)=>{
+    const {FirstName, LastName, Mobile, Role, Email, Designation} = req.body;
+
+    try{
+        //1. check if the user already exist
+        const userExists = await User.findOne({Mobile});
+
+        if(userExists){
+            return res.status(400).json({
+                message: 'A user with this mobile no already exists'});
+        } 
+
+        //2. Create the staff user
+        //Note we do not set a password here. we leave it empty
+        
+        const newstaff = await User.create({
+            FirstName,
+            LastName,
+            Mobile,
+            Email: Email.toLowerCase(),
+            Role,             // eg. <designer
+            Designation,      //
+            isVerified: true // Admin created them, so we trust the identity
+        });
+
+        res.status(201).json({
+            message: `${Role} created successfully`,
+            user: {
+                id: newstaff._id,
+                Name: `${newstaff.FirstName} ${newstaff.LastName}`,
+                Role: newstaff.Role
+            }
+        });
+    } catch(error){
+        console.error("Staff Registration Error: ", error);
+        res.status(500).json({
+            message: "Server Error while creating staff."});
+    }
+};
+
+export const setUpPassword = async(req, res)=>{
+    const {Mobile,newPassword} = req.body;
+
+    try{
+        const user = await User.findOne({Mobile});
+
+        if(!user) return res.status(404).json({
+            message: "User not Found"
+        });
+
+        if(user.Password){
+            return res.status(403).json({
+                message: "Password already exists. Use the 'Reset Password' instead."
+            })
+        }
+        //Update the password
+        user.Password = newPassword;
+
+        //save the user (our schema's pre-save hook will hash this automatically)
+        await user.save();
+
+        res.status(200).json({
+            message: "Password set successfully! you can now log in with your new password"
+        });
+    } catch (error){
+        res.status(500).json({
+            message: "error setting Password"
+        });
+    }
+}
+
+

@@ -1,5 +1,6 @@
 import User from "../Models/User.js";
 import { sendEmail, sendSMS } from ".. /Utils/messagingUtils.js";
+import { generateOTP } from "../Utils/authUtils.js";
 
 
 export const sendOTP = async(req, res, next)=>{
@@ -14,8 +15,8 @@ if(!user) return res.status(404).json({message: "Mobile number is not registered
    let targetEmail = Email.toLowerCase();
    const isNewEmail = user.Email !== targetEmail; // Define this variable!
 
-//3.  Generate a 6 digit OTP Code
-const otpCode = Math.floor(100000 + Math.random()* 900000).toString();
+//3. Generate First ..
+const otpCode = generateOTP();
 const expires = Date.now() + 5*60*1000; //code expires in 5 minutes
 
 //4. Save OTP & "Pending Email" to user record
@@ -30,6 +31,7 @@ await user.save();
 //5. Send to both Phone and New Email provided simultaneously
 
     console.log(`DEBUG: OTP for ${Mobile} is [ ${otpCode} ]`);
+    
     await Promise.all([
         
         //Send SMS (Replace with your SMS gateway like Sparrow SMS or Akash SMS)
