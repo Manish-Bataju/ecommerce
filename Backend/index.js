@@ -7,7 +7,6 @@ import orderRouter from './Routes/orderRoutes.js';
 import userRouter from './Routes/userRoutes.js';
 
 
-
 dotenv.config();
 const app = express();
 
@@ -29,6 +28,7 @@ app.use('/api/v1/orders', orderRouter);
 
 //3. Mount the User Routes
 app.use('/api/v1/users', userRouter);
+
 
 //----------------Database Connection Section------
 const ConnectDB = async () => {

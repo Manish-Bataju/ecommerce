@@ -1,4 +1,4 @@
-import { useShop } from '../context/ShopContext.jsx';
+import { useShop } from '../hooks/useShop';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
@@ -11,7 +11,7 @@ const ProfileDrawer = () => {
         {/* The overlay darkens the screen         */}
         <motion.div
         initial = {{opacity: 0}}
-        animate = {{opacity: .15}}
+        animate = {{opacity: .25}}
         exit = {{opacity: 0}}
         transition={{ duration: 0.4, ease: "easeInOut" }}
         onClick= {()=>setIsProfileOpen(false)}
@@ -44,8 +44,8 @@ const ProfileDrawer = () => {
         <div className='flex flex-col px-8 w-full h-full mt-5'>
             {/* Header of Drawer */}
             <div className='flex justify-between  items-center mb-10'>
-                <h2 className='text-2xl font-bold tracking-tight'
-                >{user ? 'My Profile' :'Account'}</h2>
+                <h2 className='text-2xl font-bold tracking-tight'>
+                {user ? 'My Profile' :'Account'}</h2>
                 <button
                 onClick={()=>setIsProfileOpen(false)}
                 className='p-2 hover:bg-gray-100 rounded-full transition-colors'

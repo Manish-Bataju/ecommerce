@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { CircleUser, Home, ShoppingCart, Store } from 'lucide-react';
-import { useShop } from '../context/ShopContext.jsx'; // 1. Import your context hook
+import { useShop } from '../hooks/useShop'; // 1. Import your context hook
 
 const categories = [
   { id: 1, label: 'HOME', categoryIcon: Home, path: '/' },

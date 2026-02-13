@@ -1,5 +1,5 @@
-import { User } from '../Models/User.js';
-import { matchPassword, generateToken } from '../Utils/authUtils.js'; // Assuming these exist
+import  User  from '../Models/User.js';
+import { generateToken, matchPassword } from '../Utils/authUtils.js'; // Assuming these exist
 
 export const loginUser = async (req, res) => {
     const { Mobile, Email, Password, otp } = req.body;

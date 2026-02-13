@@ -1,6 +1,6 @@
 export const AnnouncementBar = () => {
   return (
-    <div className='bg-mauve max-md:py-0.5 py-2 overflow-hidden whitespace-nowrap border-b border-navy/10 relative'>
+    <div className='bg-mauve max-md:py-0.5 py-1 overflow-hidden whitespace-nowrap border-b border-navy/10 relative'>
         {/* On Mobile: This flex container will animate. 
             On Desktop: We keep it centered. */}
         <div className="flex items-center gap-10 whitespace-nowrap animate-marquee md:animate-none md:justify-center">

@@ -1,6 +1,7 @@
 import express from 'express';
 const router = express.Router();
 
+
 import {loginUser, registerStaff, setUpPassword } from '../Controllers/LoginController.js'
 import {sendOTP} from '../Controllers/SendOtp.js';
 import { protect } from '../Middleware/authMiddleware.js';
@@ -16,7 +17,9 @@ router.post('/request-otp', sendOTP);
 router.post('/setup-staff-password', setUpPassword)
 
 //-----AdminOnly -------------
-router.post('/admin/register-staff', registerStaff)
+router.post('/register-staff', registerStaff)
+
+router.get('/hello', (req, res) => res.send("User Router is Active!"));
 
 //-------Protected Routes-------
 

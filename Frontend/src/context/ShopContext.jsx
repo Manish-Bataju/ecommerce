@@ -1,6 +1,6 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from "react";
+import { createContext, useState, useEffect, useRef } from "react";
 
-const ShopContext = createContext();
+export const ShopContext = createContext();
 
 export const ShopProvider =({children})=>{
     //1. Drawer States
@@ -59,5 +59,4 @@ export const ShopProvider =({children})=>{
     );
 };
 
-//this custom hook makes it easy to use the brain in any component.
-export const useShop = () => useContext(ShopContext);
+export default ShopProvider;

@@ -57,7 +57,7 @@ const userSchema = new mongoose.Schema({
     Role: {
     type: String,
     enum:['Super User', 'Designer', 'Accountant', 'Manager', 'Inventory', 'Sales', 'Delivery',  'Customer', 'Guest'],
-    default: 'Guest', //If no role is specified, the Guest will be assigned the 'User' role by default.
+    default: 'Customer', //If no role is specified, the Guest will be assigned the 'User' role by default.
     
     },
 
@@ -65,7 +65,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         trim: true,
         required: function(){
-                    return this.Role != 'Customer';} //return this.role only if the user is not a customer.
+                    return this.Role !== 'Customer' && this.Role !== 'Guest';} //return this.role only if the user is not a customer.
     },
     
 }, {timestamps: true}); // This will automatically add createdAt and updatedAt fields to the schema.
@@ -74,24 +74,24 @@ const userSchema = new mongoose.Schema({
         return await bcrypt.compare(enteredPassword, this.Password);
     }
 
-    userSchema.pre('save', async function(next){
+    userSchema.pre('save', async function(){
         //Only hash this password if it has been modified or is new
-        if(!this.isModified('Password') && this.Password){
+        if(this.isModified('Password') && this.Password){
 
-        const salt = await bcrypt.genSalt(10);
-        this.Password = await bcrypt.hash(this.Password, salt);
+        try {
+            const salt = await bcrypt.genSalt(10);
+            this.Password = await bcrypt.hash(this.Password, salt);
+            console.log("--- HASHING SUCCESSFUL ---");
+        } catch (error) {
+            console.error("Hashing Error:", error);
+            throw error; // This stops the save if hashing fails
+        }
         }
         
         //also handle userName generation here 
         if(this.FirstName && this.LastName){
-         this.userName = this.FirstName.charAt(0).toLowerCase() + "." + this.LastName.toLowerCase();
+         this.UserName = this.FirstName.charAt(0).toLowerCase() + "." + this.LastName.toLowerCase();
         }
-        next();
     });
-
-    // 2. Adding a method to compare passwords
-    userSchema.methods.matchPassword = async function(enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.Password);
-};
 
 export default mongoose.model("User", userSchema);
