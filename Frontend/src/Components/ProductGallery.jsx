@@ -67,7 +67,14 @@ const ProductGallery = ({categoryTitle, ageGroup}) => {
                         {index < product.tags.length - 1 && ', '}
                         </span>
                     ))}</div>
-                    <p className='text-xl lg:text-xl lg:font-semibold'>{formatPrice(product.price)}</p>
+                    <p className='text-xl lg:text-xl lg:font-semibold'>{formatPrice(product.price)}
+                        {/* Only show original price if there is a discount */}
+                        {product.finalPrice < product.price && (
+                        <span className="text-[10px] bg-red-50 text-red-600 px-1.5 py-0.5 rounded uppercase font-bold tracking-tighter">
+                            -{Math.round(((product.price - product.finalPrice) / product.price) * 100)}%
+                        </span>
+                    )}
+                    </p>
                     <p>{product.review}</p>
                 </div>
             </Link>

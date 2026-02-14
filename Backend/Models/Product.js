@@ -1,11 +1,40 @@
 import mongoose from "mongoose";
 import badgeAssets from "../Utils/badgeAssets.js";
 
+const variantSchema = new mongoose.Schema({
+  printName: {
+    type: String, // e.g., "Vintage Meadow" or "Blue Stripe"
+    required: [true, "Print/Color name is required"],
+    trim: true
+  },
+  swatchImage: {
+    type: String, // URL to a tiny square crop of the actual fabric print
+    required: [true, "A swatch image is required for the print Selector"]
+    },
+    images: [{
+        type: String, //an Array Full-size photos of the product in this print
+        required: true
+    }],    
+  inventory: [{ 
+        size: {
+            type: String,
+            required: true,
+            enum: ['New Born', '3M', '6M', '9M', '12M', '18M', '2Y', '3Y', '4Y', '6Y', '8Y', '10Y', '12Y', '13Y', '14Y', '16Y', '18Y']
+            },
+        stock: {
+            type: Number,
+            required: true,
+            min: [0, "Stock cannot be negative"],
+            default: 0
+        }}]
+});
+
 const productSchema = new mongoose.Schema({
     title:{
         type: String,
         required: [true,"A product must have a title"],
-        minLength: [20, "title must be at least 10 characters long"],
+        minLength: [10, "title must be at least 10 characters long"],
+        maxLength:[35, "title must be at maximum 35 characters long"],
         trim: true, //trims the sspaces before and after the string..
     },
     
@@ -33,6 +62,9 @@ const productSchema = new mongoose.Schema({
         required: [true, " A product must have a price"],
         min: [0, "Price can not be negative"],
     },
+    finalPrice: {
+        type: Number
+    },
     discount:{
         discountType:{
             type: String,
@@ -52,34 +84,15 @@ const productSchema = new mongoose.Schema({
         required: [true, " Gender is must"],
         enum: ['Boy', 'Girl', 'Unisex'],
     },
-    inventory: [
-        {
-            color:{
-                name:{
-                    type: String,
-                    required: [true, "Color Name is required"],
-                    trim: true
-                },
-                hex:{
-                    type: String,
-                    required: [true, "Color Hex Code is required"],
-                    trim: true,
-                    match: [/^#(?:[0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/,"Invalid Hex Code (e.g. #000 or #000000)" ],
-                }
-            },
-            size: {
-                type: String,
-                required: true,
-                enum: ['New Born', '3M', '6M', '9M', '12M', '18M', '2Y', '3Y', '4Y', '6Y', '8Y', '10Y', '12Y', '13Y', '14Y', '16Y', '18Y']
-            },
-            stock: {
-                type: Number,
-                required: true,
-                min: [0, "Stock cannot be negative"],
-                default: 0
-            }
-        }
-    ],
+    variants: [variantSchema],
+    fabric: {
+    type: String,
+    required: [true, "A product must have a fabric type defined"],
+    enum: {
+      values: ['Organic Cotton', 'Bamboo-Blend', 'Linen', 'Merino Wool', 'Hemp', 'Muslin', 'Cotton-Blend', 'Cotton-Viscose', 'Cotton-Polyester', '100% Polyester'],
+      message: '{VALUE} is not a supported fabric type'
+          }
+    },
     clothingCategory:{
         type: String,
         required: [true, " Category is must"],
@@ -101,15 +114,6 @@ const productSchema = new mongoose.Schema({
         trim: true,
     },
 
-    //Multiple high-res Photos for the gallery
-    images:{
-        type: [String],
-        validate:{
-            validator:  function (v) {return v && v.length > 0},
-            message: "A product gallery should have atleast 1 image"
-        }  
-    },
-
     //Social Engagement
     likes: {
         count: {
@@ -128,20 +132,6 @@ const productSchema = new mongoose.Schema({
     toJSON: {virtuals: true},
     toObject: {virtuals: true},
 }); 
-
-//1. Virtual Property to calculate final price after discount
-productSchema.virtual('finalPrice').get(function(){
-    let finalPrice = this.price;
-
-    if(this.discount && this.discount.discountType !== 'None' && this.discount.value > 0){
-        if (this.discount.discountType === 'Percentage'){
-            finalPrice = Math.round(this.price - (this.price * (this.discount.value / 100)));
-            } else if (this.discount.discountType === 'Fixed Amount'){
-            finalPrice = this.price - this.discount.value;
-        }
-    }
-    return finalPrice;
-});
 
 productSchema.virtual('displayBadges').get(function(){
     // we map through tags and see id we have a matching image in our utils
@@ -176,6 +166,30 @@ productSchema.pre('save', function() {
             .replace(/[^\w\s-]/g, '')
             .replace(/[\s_-]+/g, '-');
     }
+});
+
+// 1. Logic to calculate price (we'll use this in the middleware)
+const calculateFinalPrice = (product) => {
+    let price = product.price;
+    const { discount } = product;
+
+    if (discount && discount.discountType !== 'None' && discount.value > 0) {
+        if (discount.discountType === 'Percentage') {
+            price = price - (price * (discount.value / 100));
+        } else if (discount.discountType === 'Fixed Amount') {
+            price = Math.max(0, price - discount.value);
+        }
+    }
+    return price;
+};
+
+// 2. Middleware to set finalPrice before saving
+productSchema.pre('save', function(next) {
+    // Only recalculate if price or discount has changed
+    if (this.isModified('price') || this.isModified('discount')) {
+        this.finalPrice = calculateFinalPrice(this);
+    }
+    next();
 });
 
 export default mongoose.model("Product", productSchema);
