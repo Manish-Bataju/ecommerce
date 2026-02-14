@@ -18,7 +18,7 @@ export default function DesktopNavBar() {
   const cartCount = 0;
 
   return (
-    <div className='bg-navy text-white h-11 py-1 px-[clamp(0.5rem,3vw,3rem)] text-xl font-heading flex justify-between items-center shadow-[0_0_15px_rgba(0,0,0,0.2)]'>
+    <div className='bg-navy text-white h-12 py-3 px-[clamp(0.5rem,3vw,3rem)] text-xl font-heading flex justify-between items-center shadow-[0_0_15px_rgba(0,0,0,0.2)]'>
 
       {/* LEFT SIDE: Logo */}
       <NavLink to='/'>
@@ -27,7 +27,7 @@ export default function DesktopNavBar() {
          
          {/* Middle: Navigation Bar */}
         <div className='flex items-start'>
-        <ul className='flex gap-[clamp(1.5rem,3vw,4rem)]'>
+        <ul className='flex text-2xl gap-[clamp(1.5rem,3vw,4rem)]'>
         {categories.map((cat) => (
           <li key={cat.path}>
             <div className='flex flex-col items-center justify-center gap-0.5'>
@@ -35,8 +35,8 @@ export default function DesktopNavBar() {
                 to={cat.path} 
                 className={({ isActive }) =>
                   isActive
-                    ? 'inline-block transition-transform duration-200 text-white text-xl font-semibold border-b-2 border-mauve' 
-                    : 'font-normal border-b-2 border-transparent hover:scale-110'
+                    ? 'inline-block transition-transform duration-200 text-white text-2xl font-semibold border-b-3 border-mauve' 
+                    : 'font-normal border-b-3 border-transparent hover:scale-110'
                 }
               >
                 {cat.name}
@@ -50,10 +50,10 @@ export default function DesktopNavBar() {
 
         <li>
           <NavLink 
-            to="/clearance" 
+            to="/sale" 
             className={({ isActive }) => 
               isActive 
-                ? 'inline-block tracking-wide transition-transform duration-200 text-amber-200 text-l font-semibold border-b-2 border-amber-200' 
+                ? 'inline-block tracking-wide transition-transform duration-200 text-amber-200 text-2xl font-semibold border-b-3 border-amber-200' 
                 : 'inline-block transition-all duration-200 hover:scale-110 text-amber-200'
             }
           >

@@ -70,7 +70,7 @@ const productSchema = new mongoose.Schema({
             size: {
                 type: String,
                 required: true,
-                enum: ['New Born', '3M', '6M', '9M', '12M', '18M', '2Y', '3Y', '4Y', '6Y', '8Y', '10Y', '12Y']
+                enum: ['New Born', '3M', '6M', '9M', '12M', '18M', '2Y', '3Y', '4Y', '6Y', '8Y', '10Y', '12Y', '13Y', '14Y', '16Y', '18Y']
             },
             stock: {
                 type: Number,
