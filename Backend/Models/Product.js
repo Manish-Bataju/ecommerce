@@ -3,11 +3,10 @@ import badgeAssets from "../Utils/badgeAssets.js";
 
 const variantSchema = new mongoose.Schema({
   printName: {
-    type: String, // e.g., "Vintage Meadow" or "Blue Stripe"
-    required: [true, "Print/Color name is required"],
+    type: String, // e.g., "Vintage Meadow" or "Blue Stripe",
     trim: true
-  },
-  swatchImage: {
+    },
+    swatchImage: {
     type: String, // URL to a tiny square crop of the actual fabric print
     required: [true, "A swatch image is required for the print Selector"]
     },
@@ -96,7 +95,7 @@ const productSchema = new mongoose.Schema({
     clothingCategory:{
         type: String,
         required: [true, " Category is must"],
-        enum: ['Tops', 'Bottoms', 'Outerwear', 'OverAlls', 'Sleepwear', 'Accessories', 'Bundles'],
+        enum: ['Tops', 'Bottoms', 'Outerwear', 'OverAlls', 'Sleepwear', 'Accessories', 'Bundles', 'Dresses'],
     },
     thumbnails:{
         type: String,
@@ -191,5 +190,19 @@ productSchema.pre('save', function(next) {
     }
     next();
 });
+
+productSchema.pre('save', function(next) {
+    //only generate MPN if it doesn't exist
+    if(!this.mpn){
+        const cat = this.clothingCategory.substring(0, 3).toUpperCase();
+        const age = this.ageGroup.substring(0, 3).toUpperCase();
+
+        //using the end of the MONGODB ID add the uniqueness
+        const uniqueSuffix = this._id.toString().slice(-5).toUpperCase();
+
+        this.mpn = `${cat}-${age}-${uniqueSuffix}`;
+    }
+    next();
+})
 
 export default mongoose.model("Product", productSchema);

@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchAllProducts } from '../services/ProductService.jsx';
 import {Link} from 'react-router-dom';
-
-   // defining size Maps based on schema
-    const Category_Map= {
-    baby: ['New Born', '3M', '6M'],
-    tots: ['9M', '12M', '18M'],
-    junior: ['2Y', '3Y', '4Y'],
-    kids: ['6Y', '8Y', '10Y', '12Y'],
-    teen: ['13Y', '14Y', '16Y', '18Y']
-};
+import { Category_Map } from '../data/CategoryConfig';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('en-US', {

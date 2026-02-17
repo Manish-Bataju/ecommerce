@@ -1,8 +1,21 @@
-import React from 'react'
+import logo from '../assets/Pukucha_logo-01.svg';
+import { NavLink } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <div>Footer</div>
+    <div>
+      <img src={logo} alt={logo}/>
+      <NavLink>
+        <ul>
+          <li>Company</li>
+          <li>Size Chart</li>
+          <li>Return Policy</li>
+          <li>Refund Policy</li>
+          <li>hello</li>
+          <li>Micro </li>
+        </ul>
+      </NavLink>
+    </div>
   )
 }
 

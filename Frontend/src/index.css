@@ -40,12 +40,15 @@ html, body, #root {
 }
 
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.logo .logo {
+  animation: logo-spin infinite 20s linear;
+  /* This fixes the performance warning */
+  will-change: transform; 
+  
+  /* Optional: Force 3D rendering for even smoother results */
+  transform: translateZ(0); 
 }
+
 
 @keyframes logo-spin {
   from {
