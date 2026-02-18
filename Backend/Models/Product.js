@@ -2,18 +2,43 @@ import mongoose from "mongoose";
 import badgeAssets from "../Utils/badgeAssets.js";
 
 const variantSchema = new mongoose.Schema({
+    variantType:{
+        type: String,
+        enum:['color', 'printed'],
+        required: [true, "Variant type must be specified"]
+    },
+
+    // for color variants
+    hexValue:{
+        type:String,
+        match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
+        required: function(){
+            return this.variantType === 'color';
+        }
+    },
+    colorImages: [{
+        type: String, //an Array Full-size photos of the product in solid color
+        required: function(){
+            return this.variantType ==='color';
+        }
+    }],   
   printName: {
     type: String, // e.g., "Vintage Meadow" or "Blue Stripe",
-    trim: true
+    trim: true,
+    required: function(){
+        return this.variantType === 'printed';
+    }
     },
-    swatchImage: {
+    printImages: [{
+        type: String, //an Array Full-size photos of the product in this print
+        required: function(){
+            return this.variantType ==='printed';
+        }
+    }],   
+        swatchImage: {
     type: String, // URL to a tiny square crop of the actual fabric print
     required: [true, "A swatch image is required for the print Selector"]
     },
-    images: [{
-        type: String, //an Array Full-size photos of the product in this print
-        required: true
-    }],    
   inventory: [{ 
         size: {
             type: String,

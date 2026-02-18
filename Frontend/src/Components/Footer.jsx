@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 const Footer = () => {
   return (
     <div>
-      <img src={logo} alt={logo}/>
+      <img src={logo} alt={logo} className='h-2'/>
       <NavLink>
         <ul>
           <li>Company</li>
