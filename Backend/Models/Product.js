@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import badgeAssets from "../Utils/badgeAssets.js";
+import { Category_Map } from "../../Frontend/src/data/CategoryConfig.js";
 
 const variantSchema = new mongoose.Schema({
     variantType:{
@@ -43,7 +44,13 @@ const variantSchema = new mongoose.Schema({
         size: {
             type: String,
             required: true,
-            enum: ['New Born', '3M', '6M', '9M', '12M', '18M', '2Y', '3Y', '4Y', '6Y', '8Y', '10Y', '12Y', '13Y', '14Y', '16Y', '18Y']
+            enum: [
+                ...Category_Map.Baby.sizes,
+                ...Category_Map.Tots.sizes,
+                ...Category_Map.Junior.sizes,
+                ...Category_Map.Kids.sizes,
+                ...Category_Map.Teen.sizes
+            ]
             },
         stock: {
             type: Number,

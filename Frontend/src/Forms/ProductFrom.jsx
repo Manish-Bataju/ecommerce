@@ -1,15 +1,18 @@
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import {SwatchCropper} from "../utility/SwatchCropper.jsx";
+import { Category_Map } from "../data/CategoryConfig.js";
+import { useState } from "react";
 
 const localDate = new Date().toLocaleDateString('en-CA');
 
 // 1. SUB-COMPONENT FOR EACH VARIANT
-const VariantItem = ({ index, control, register, remove, setValue }) => {
+const VariantItem = ({ index, control, register, remove, setValue, errors }) => {
   const variantType = useWatch({ control, name: `variants.${index}.variantType`, defaultValue: "color" });
   const hexValue = useWatch({ control, name: `variants.${index}.hexValue` });
   const swatchImage = useWatch({ control, name: `variants.${index}.swatchImage` });
   const tempMasterImage = useWatch({ control, name: `variants.${index}.tempMasterImage` });
-  const imageFiles = useWatch({ control, name: `variants.${index}.images` });
+  const imageFiles = useWatch({ control, name: `variants.${index}.images` }) || [];
+  const [selectedCategory, setSelectedCategory] = useState(null);
 
   return (
     <div className="border p-4 rounded-lg bg-gray-50 mb-6 flex flex-col gap-4">
@@ -19,16 +22,16 @@ const VariantItem = ({ index, control, register, remove, setValue }) => {
         <button type="button" onClick={() => remove(index)} className="text-red-500 text-xs font-bold uppercase">Remove</button>
       </div>
 
-      <select {...register(`variants.${index}.variantType`)} className="border p-2 rounded-md bg-white">
+      <select {...register(`variants.${index}.variantType`)} className="border p-2 w-1/3 rounded-md bg-white relative">
         <option value="color">Solid Color</option>
         <option value="printed">Printed Fabric</option>
       </select>
 
       {/* 2. Logic Switch */}
       {variantType === "color" ? (
-        <div className="flex items-center gap-4 p-3 bg-white border rounded">
+        <div className="flex items-center gap-4 p-3 bg-white border rounded ">
           <input {...register(`variants.${index}.hexValue`)} placeholder="Hex Code (#000000)" className="border p-2 flex-1 uppercase font-mono" />
-          <div className="w-10 h-10 rounded-full border shadow-sm" style={{ backgroundColor: hexValue || '#eee' }} />
+          <div className="w-10 h-10 rounded-full border shadow-sm whitespace-nowrap" style={{ backgroundColor: hexValue || '#eee' }} />
         </div>
       ) : (
         <div className="p-3 bg-white border rounded flex flex-col gap-3">
@@ -79,19 +82,87 @@ const VariantItem = ({ index, control, register, remove, setValue }) => {
       {/* 3. Common Gallery (Visible for both) */}
       <div className="flex flex-col gap-2 pt-2 border-t">
         <label className="text-[10px] font-bold text-gray-500">VARIANT IMAGES (MODEL PHOTOS)</label>
-        <input type="file" multiple {...register(`variants.${index}.images`)} className="text-xs" />
+        <input type="file" multiple {...register(`variants.${index}.images`)} className="text-xs"
+        onChange={(e) => {
+        const newFiles = Array.from(e.target.files || []);
+        setValue(`variants.${index}.images`, [...imageFiles, ...newFiles]);
+    }}/>
         
         {imageFiles && imageFiles.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mt-1">
             {Array.from(imageFiles).map((file, i) => (
-              <div key={i} className="aspect-square rounded overflow-hidden border">
-                <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+              <div key={i}
+                   className="relative aspect-square rounded overflow-hidden border">
+                <img
+                  src={URL.createObjectURL(file)}
+                  className="w-full h-full object-cover" />
+
+                {/* Delete button overlay */}
+                <button
+                type="button"
+                className="absolute top-1 right-1 bg-red-600 text-white text-[10px] px-1 rounded"
+                onClick={() => {
+                    const updated = imageFiles.filter((_, idx) => idx !== i);
+                    setValue(`variants.${index}.images`, updated);
+                  }}
+                >
+                  ✕
+                </button>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      <div>
+      {/* Step 2: dropdown */}
+      <select value={selectedCategory || ""}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+      className="border rounded px-2 py-1"
+      >
+        <option value="">Select Category</option>
+        {Object.entries(Category_Map).map(([key, group]) => (
+          <option key={key} value={key}>
+            {key} - {group.description}
+          </option>
+        ))}
+      </select>
+
+      {/* Step 3: render sizes only for selected category */}
+      {selectedCategory && (
+        <div className="mt-4">
+          <h4 className="font-bold text-sm">
+            {Category_Map[selectedCategory].description}
+          </h4>
+          {Category_Map[selectedCategory].sizes.map((size, i) => (
+          <div key={size} className="w-1/3 grid grid-cols-2 items-start gap-2">
+          <label htmlFor={`stock-${index}-${i}`}>{size}</label>
+          <div className="flex flex-col">
+            <input
+              id={`stock-${index}-${i}`}
+              type="number"
+              {...register(`variants.${index}.inventory.${i}.stock`, {
+                required: "Stock is required",
+                valueAsNumber: true, // ensures numbers, but empty becomes NaN
+                min: { value: 0, message: "Numbers can't be negative" },
+              })}
+              className="w-16 border rounded px-1 cursor-pointer"
+              defaultValue=""
+            />
+            {errors?.variants?.[index]?.inventory?.[i]?.stock && (
+              <span className="text-red-500 text-xs col-span-2 row-start-2">
+                {errors.variants?.[index]?.inventory?.[i]?.stock?.message}
+              </span>
+            )}
+          </div>
+        </div>
+
+        ))}
+
+        </div>
+      )}
     </div>
+      </div>
   );
 };
 
@@ -101,6 +172,7 @@ const VariantItem = ({ index, control, register, remove, setValue }) => {
 const ProductFrom = () => {
   const { register, control, handleSubmit, setValue, formState: { errors } } = useForm({
     mode: "all",
+    reValidateMode: "onChange",
     defaultValues: {
       title: '',
       description: '',
@@ -144,20 +216,21 @@ const ProductFrom = () => {
         <div className="flex flex-col gap-1">
           <label className="font-bold text-gray-700">Title</label>
           <input 
-            {...register('title', { required: "Required", minLength: 10 })}
+            {...register('title', { required: "Required", minLength: {value: 10, message: "Title has to be minimum 10 Characters Long"}})}
             className="border rounded-md p-2 w-full"
             placeholder="Product Title"
           />
-          {errors.title && <span className="text-red-500 text-xs">{errors.title.message}</span>}
+          {errors.title && <span className="text-red-500 font-md text-sm">{errors.title.message}</span>}
         </div>
 
         {/* Description */}
         <div className="flex flex-col gap-1">
           <label className="font-bold text-gray-700">Description</label>
           <textarea
-            {...register("description", { required: "Required" })}
+            {...register("description", { required: "Required", minLength: {value: 35, message: "Minimum 35 Characters long"}})}
             className="border p-2 rounded-md h-24"
           />
+          {errors.description && <span className="text-red-500 text-sm font-md">{errors.description.message}</span> }
         </div>
 
         {/* Price & Discount Section */}
@@ -166,17 +239,23 @@ const ProductFrom = () => {
             <label className="font-bold">Price</label>
             <input 
               type="number" 
-              {...register("price", { min: 0 })} 
+              {...register("price", {
+                min: {value: 0, message: "Price can not be negative"}
+              })} 
               className="border p-1 rounded" 
               onWheel={(e) => e.target.blur()}
-            />
+              />
+              {errors.price && <span className="text-red-500 text-sm font-md ">{errors.price.message}</span> }
           </div>
           <div className="flex flex-col gap-1">
             <label className="font-bold">Discount Type</label>
-            <select {...register("discount.discountType")} className="border p-1 rounded">
-              <option value="none">None</option>
+            <select {...register("discount.discountType")}
+            className="border p-1 rounded">
+              <option value="None">None</option>
               <option value="Percentage">Percentage</option>
               <option value="Fixed Amount">Fixed Amount</option>
+              <option value="Free Delivery">Free Delivery</option>
+              <option value="Buy 1 Get 1 Free">Buy1 Get 1 Free</option>
             </select>
           </div>
         </div>
@@ -211,6 +290,8 @@ const ProductFrom = () => {
         >
           Submit Product
         </button>
+
+        <pre>{JSON.stringify(errors, null, 2)}</pre>
       </form>
     </div>
   );

@@ -1,24 +1,24 @@
    // defining size Maps based on schema
     export const Category_Map= {
-    baby: {
+    Baby: {
         sizes: ['New Born', '3M', '6M'],
-        description: "from New Born to 6 Months"
+        description: "New Born to 6 Months"
     },
-    tots: {
+    Tots: {
         sizes: ['9M', '12M', '18M'],
-        description: "from 9 Months to 18 Months"
+        description: "9 Months to 18 Months"
     },
-    junior: {
+    Junior: {
         sizes: ['2Y', '3Y', '4Y'],
-        description: "from 2 Years to 4 Years"
+        description: "2 Years to 4 Years"
     },
-    kids: {
+    Kids: {
         sizes: ['6Y', '8Y', '10Y', '12Y'],
-        description: "from 6 Years to 12 Years"
+        description: "6 Years to 12 Years"
     },
-    teen: {
+    Teen: {
         sizes: ['13Y', '14Y', '16Y', '18Y'],
-        description: "from 13 Years to 18 Years"
+        description: "13 Years to 18 Years"
     }
 };
 
