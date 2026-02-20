@@ -1,7 +1,8 @@
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import {SwatchCropper} from "../utility/SwatchCropper.jsx";
-import { Category_Map } from "../data/CategoryConfig.js";
+import { Category_Map, CategoryConfig } from "../data/CategoryConfig.js";
 import { useState } from "react";
+import CategorySelector from "../Components/CategorySelector.jsx";
 
 const localDate = new Date().toLocaleDateString('en-CA');
 
@@ -13,6 +14,7 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
   const tempMasterImage = useWatch({ control, name: `variants.${index}.tempMasterImage` });
   const imageFiles = useWatch({ control, name: `variants.${index}.images` }) || [];
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const inventoryValue = useWatch({ control, name: `variants.${index}.inventory`}) || [];
 
   return (
     <div className="border p-4 rounded-lg bg-gray-50 mb-6 flex flex-col gap-4">
@@ -116,7 +118,7 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
 
       <div>
       {/* Step 2: dropdown */}
-      <select value={selectedCategory || ""}
+      <select id="dropdown" value={selectedCategory || ""}
       onChange={(e) => setSelectedCategory(e.target.value)}
       className="border rounded px-2 py-1"
       >
@@ -134,30 +136,39 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
           <h4 className="font-bold text-sm">
             {Category_Map[selectedCategory].description}
           </h4>
-          {Category_Map[selectedCategory].sizes.map((size, i) => (
-          <div key={size} className="w-1/3 grid grid-cols-2 items-start gap-2">
-          <label htmlFor={`stock-${index}-${i}`}>{size}</label>
+          {Category_Map[selectedCategory].sizes.map((size, i) => {
+              const stockValue = inventoryValue[i]?.stock; // safe lookup
+          
+          return (
+          <div className="flex gap-2 justify-between flex-nowrap">
+          <div key={size} className="flex-1 grid grid-cols-2 items-start gap-1">
+          <label htmlFor={`stock-${index}-${i}`} >{size}</label>
           <div className="flex flex-col">
-            <input
+              <input
               id={`stock-${index}-${i}`}
               type="number"
               {...register(`variants.${index}.inventory.${i}.stock`, {
                 required: "Stock is required",
-                valueAsNumber: true, // ensures numbers, but empty becomes NaN
-                min: { value: 0, message: "Numbers can't be negative" },
+                validate: (value) => {
+                  if (value === undefined || value === null || Number.isNaN(value)) {
+                    return "Stock is required"; 
+                  } if (value < 0) {
+                    return "Numbers can't be negative";
+                  } return true; }
               })}
-              className="w-16 border rounded px-1 cursor-pointer"
-              defaultValue=""
+              className={`border rounded px-1 cursor-pointer row-span-2 ${stockValue < 0 ? "border-red-500" : "border-gray-300"}`}
             />
             {errors?.variants?.[index]?.inventory?.[i]?.stock && (
-              <span className="text-red-500 text-xs col-span-2 row-start-2">
-                {errors.variants?.[index]?.inventory?.[i]?.stock?.message}
+              <span className="text-red-500 text-xs text-center col-span-2 ">
+                {errors.variants?.[index].inventory?.[i]?.stock.message}
               </span>
             )}
           </div>
-        </div>
+          
+          </div>
+          </div>
 
-        ))}
+        )})}
 
         </div>
       )}
@@ -167,11 +178,10 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
 };
 
 
-
 // 2. MAIN FORM COMPONENT
 const ProductFrom = () => {
   const { register, control, handleSubmit, setValue, formState: { errors } } = useForm({
-    mode: "all",
+    mode: "onChange",
     reValidateMode: "onChange",
     defaultValues: {
       title: '',
@@ -201,11 +211,20 @@ const ProductFrom = () => {
 
   const { fields, append, remove } = useFieldArray({ control, name: "variants" });
 
-  const discountType = useWatch({ control, name: "discount.discountType" });
+  // const discountType = useWatch({ control, name: "discount.discountType" });
 
   const onSubmit = (data) => {
     console.log("Form Data:", data);
   };
+  
+  // Categories Map for Clothing Type
+  
+  const [selectedCategories, setSelectedCategories] = useState([]);
+
+  const handleCategoryChange = (updated) =>(
+    setSelectedCategories(updated)
+
+  )
 
   return (
     <div className="flex flex-col ml-10 mx-auto px-5 py-8 w-[45vw] border-2 rounded-lg bg-white shadow-xl">
@@ -284,6 +303,21 @@ const ProductFrom = () => {
           </button>
         </div>
 
+          <div>
+            <div>
+              <h3>{CategoryConfig.fabric.title}</h3>
+            <select name="fabric" id="fabric">
+            {CategoryConfig.fabric.values.map((value)=>(
+                <option key={value}className="">
+                {value}
+                </option>
+            ))}  
+            </select>   
+            </div>
+            <div></div>
+            <div></div>
+          </div>
+
         <button 
           type="submit" 
           className="bg-green-600 text-white font-bold py-3 rounded-lg mt-4 hover:bg-green-700 shadow-lg"
@@ -291,7 +325,9 @@ const ProductFrom = () => {
           Submit Product
         </button>
 
-        <pre>{JSON.stringify(errors, null, 2)}</pre>
+        {/* this is for the fabric and tags section */}
+
+       
       </form>
     </div>
   );

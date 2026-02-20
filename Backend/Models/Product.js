@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import badgeAssets from "../Utils/badgeAssets.js";
 import { Category_Map } from "../../Frontend/src/data/CategoryConfig.js";
+import { Clothing_Category_Enum, Fabric_Category_Enum, Product_Tag_Enum } from "../../Shared/enums.js";
 
 const variantSchema = new mongoose.Schema({
     variantType:{
@@ -120,14 +121,14 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, "A product must have a fabric type defined"],
     enum: {
-      values: ['Organic Cotton', 'Bamboo-Blend', 'Linen', 'Merino Wool', 'Hemp', 'Muslin', 'Cotton-Blend', 'Cotton-Viscose', 'Cotton-Polyester', '100% Polyester'],
+      values: Fabric_Category_Enum,
       message: '{VALUE} is not a supported fabric type'
           }
     },
     clothingCategory:{
         type: String,
         required: [true, " Category is must"],
-        enum: ['Tops', 'Bottoms', 'Outerwear', 'OverAlls', 'Sleepwear', 'Accessories', 'Bundles', 'Dresses'],
+        enum: Clothing_Category_Enum,
     },
     thumbnails:{
         type: String,
@@ -136,7 +137,10 @@ const productSchema = new mongoose.Schema({
     tags:{
         type: [String],
         required: [true, " At least one tag is required"],
-        enum: ['New Arrival', 'Best Seller', 'Discounted', 'Limited Edition', 'Buy One Get One Free', 'Free Shipping', 'Seasonal', 'Exclusive', 'Trending', '100% Cotton', 'Organic', 'Handmade', 'Eco-Friendly', 'Machine Washable', 'Lightweight', 'Warm', 'Breathable', 'Durable', 'Soft', 'Stretchy', 'Water-Resistant', 'UV Protection', 'Bamboo Fabric', 'Cotton Blend', 'Recycled Materials', 'Winter Collection', 'Summer', 'Winter', 'Autumn', 'Monsoon'],
+        enum: {
+            values: Product_Tag_Enum,
+            message: '{Value} is not a supported product tag'
+        }
     },
     slug: {
         type: String,

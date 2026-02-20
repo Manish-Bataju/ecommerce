@@ -1,5 +1,7 @@
+import { Clothing_Category_Enum, Fabric_Category_Enum, Product_Tag_Groups } from "../../../Shared/enums.js";
+
    // defining size Maps based on schema
-    export const Category_Map= {
+export const Category_Map= {
     Baby: {
         sizes: ['New Born', '3M', '6M'],
         description: "New Born to 6 Months"
@@ -22,48 +24,19 @@
     }
 };
 
-export const Clothing_Category_Map = [
-    "Tops",
-    "Bottoms",
-    "Outerwear",
-    "Dresses",
-    "OverAlls",
-    "Sleepwear",
-    "Accessories",
-    "Bundles"
-]
 
-export const Fabric_Category =
-[
-'Organic Cotton',
-'Bamboo-Blend',
-'Linen',
-'Merino Wool',
-'Hemp',
-'Muslin',
-'Cotton-Blend',
-'Cotton-Viscose',
-'Cotton-Polyester',
-'100% Polyester',
-'100% Cotton'
-]
-
-export const Product_Tag_Groups = {
-    Marketing: [
-        'New Arrival', 'Best Seller', 'Discounted', 'Limited Edition', 
-        'Buy One Get One Free', 'Free Shipping', 'Exclusive', 'Trending'
-    ],
-    Fabric: [
-        'Organic Cotton','Bamboo-Blend','Linen',
-        'Merino Wool','Hemp','Muslin','Cotton-Blend','Cotton-Viscose',
-        'Cotton-Polyester','100% Polyester','100% Cotton'
-    ],
-    Performance: [
-        'Machine Washable', 'Lightweight', 'Warm', 'Breathable', 
-        'Durable', 'Soft', 'Stretchy', 'Water-Resistant', 'UV Protection'
-    ],
-    Season: [
-        'Seasonal', 'Winter Collection', 'Summer', 'Winter', 'Autumn', 'Monsoon'
-    ]
+export const CategoryConfig = {
+  clothing: {
+    title: "Clothing Category",
+    values: Clothing_Category_Enum
+  },
+  fabric: {
+    title: "Fabric Category",
+    values: Fabric_Category_Enum
+  },
+  tags: [
+    { title: "Marketing", values: Product_Tag_Groups.Marketing },
+    { title: "Performance", values: Product_Tag_Groups.Performance },
+    { title: "Seasonal", values: Product_Tag_Groups.Season }
+  ]
 };
-

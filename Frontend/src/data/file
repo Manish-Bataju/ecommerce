@@ -133,7 +133,7 @@ const VariantCard = ({ vIdx, register, watch, control, selectedAgeGroup, setValu
           </label>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 min-h-[80px]">
+        <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 min-h-20">
           {previews.map((url, imgIdx) => (
             <div 
               key={imgIdx}
