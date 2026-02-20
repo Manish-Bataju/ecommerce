@@ -303,20 +303,54 @@ const ProductFrom = () => {
           </button>
         </div>
 
-          <div>
+          <div className="flex gap-3">
             <div>
-              <h3>{CategoryConfig.fabric.title}</h3>
-            <select name="fabric" id="fabric">
+              <h3 className="font-bold">{CategoryConfig.fabric.title}</h3>
+            <select
+            name="fabric"
+            id="fabric"
+            className="border rounded-md shadow-xs px-2 py-1">
             {CategoryConfig.fabric.values.map((value)=>(
-                <option key={value}className="">
+                <option key={value} value={value}>
                 {value}
                 </option>
             ))}  
             </select>   
             </div>
-            <div></div>
-            <div></div>
+            <div>
+              <div>
+              <h3 className="font-bold">{CategoryConfig.clothing.title}</h3>
+              <select
+              name="clothing"
+              id="clothing"
+              className="border rounded-md shadow-xs px-2 py-1 ">
+              {CategoryConfig.clothing.values.map((value)=>(
+                  <option key={value} value={value}>
+                  {value}
+                  </option>
+              ))}  
+              </select>   
+            </div>
+            </div>
           </div>
+          
+          <div>
+            <div className="flex gap-2">
+                {CategoryConfig.tags.map((tagGroup)=>(
+              <div key={tagGroup.title} className="flex flex-wrap">
+                <h3 className="font-bold">{tagGroup.title}</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {tagGroup.values.map((value)=>(
+                  <span key={value}
+                  className="border rounded-md px-2 mr-2">
+                    {value}</span>))}
+                </div>
+                <hr/>
+              </div>
+            ))}
+            </div>
+           
+            </div>  
 
         <button 
           type="submit" 
