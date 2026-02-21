@@ -1,20 +1,23 @@
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import {SwatchCropper} from "../utility/SwatchCropper.jsx";
 import { Category_Map, CategoryConfig } from "../data/CategoryConfig.js";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import CategorySelector from "../Components/CategorySelector.jsx";
 
 const localDate = new Date().toLocaleDateString('en-CA');
 
 // 1. SUB-COMPONENT FOR EACH VARIANT
-const VariantItem = ({ index, control, register, remove, setValue, errors }) => {
+const VariantItem = ({ fieldId, index, control, register, remove, setValue, errors }) => {
   const variantType = useWatch({ control, name: `variants.${index}.variantType`, defaultValue: "color" });
   const hexValue = useWatch({ control, name: `variants.${index}.hexValue` });
   const swatchImage = useWatch({ control, name: `variants.${index}.swatchImage` });
   const tempMasterImage = useWatch({ control, name: `variants.${index}.tempMasterImage` });
   const imageFiles = useWatch({ control, name: `variants.${index}.images` }) || [];
+  const colorImages = useWatch({ control, name: `variants.${index}.colorImages` }) || [];
   const [selectedCategory, setSelectedCategory] = useState(null);
   const inventoryValue = useWatch({ control, name: `variants.${index}.inventory`}) || [];
+
+  const fileInputref = useRef(null);
 
   return (
     <div className="border p-4 rounded-lg bg-gray-50 mb-6 flex flex-col gap-4">
@@ -31,10 +34,53 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
 
       {/* 2. Logic Switch */}
       {variantType === "color" ? (
-        <div className="flex items-center gap-4 p-3 bg-white border rounded ">
-          <input {...register(`variants.${index}.hexValue`)} placeholder="Hex Code (#000000)" className="border p-2 flex-1 uppercase font-mono" />
-          <div className="w-10 h-10 rounded-full border shadow-sm whitespace-nowrap" style={{ backgroundColor: hexValue || '#eee' }} />
+        <div className="flex flex-col gap-4 p-3 bg-white border rounded ">
+          <div className="flex gap-2">
+           <input {...register(`variants.${index}.hexValue`)} placeholder="Hex Code (#000000)" className="border p-2 rounded-md w-1/2 uppercase font-mono" />
+           <div className="w-10 h-10 rounded-full border shadow-sm whitespace-nowrap" style={{ backgroundColor: hexValue || '#eee' }} />
+          </div>
+          
+          {/* Color Variant */}
+           <input
+           ref={fileInputref}
+           type='file'
+           multiple
+           accept= "images/*"
+           onChange={(e)=>{
+           const newFiles = Array.from(e.target.files || []);
+           setValue(`variants.${index}.colorImages`, newFiles)
+           }}
+           />
+
+           {/* Displaying those images stored in the variants */}
+           <div className="flex gap-2 flex-wrap">
+              {colorImages.map((file, i)=>(
+              <div key={i} className="relative w-20 h-20">
+                 <img src={URL.createObjectURL(file)} className=" w-full h-full object-cover"
+                 alt={`color variant ${i}`}/>
+
+               {/* Delete button overlay */}
+                <button
+                type="button"
+                className="absolute top-1 right-1 bg-red-600 text-white text-[10px] px-1 rounded"
+                onClick={() => {
+                    const updated = colorImages.filter((_, idx) => idx !== i);
+                    setValue(`variants.${index}.colorImages`,updated, {shouldDirty: true});
+                    if(fileInputref.current){
+                      fileInputref.current.value = ""; 
+                    }
+                  }}
+                >
+                  ✕
+                </button>
+            </div>
+            ))}
+
+           
+           </div>
         </div>
+
+
       ) : (
         <div className="p-3 bg-white border rounded flex flex-col gap-3">
           <input {...register(`variants.${index}.printName`)} placeholder="Print Name" className="border p-2 rounded" />
@@ -46,13 +92,12 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
               accept="image/*" 
               className="text-xs"
               onChange={(e) => {
-                const file = e.target.files[0];
-                if (file) {
+                const file = e.target.files;
+                if(file){
                   const reader = new FileReader();
-                  reader.onload = () => setValue(`variants.${index}.tempMasterImage`, reader.result);
+                  reader.onload = () => setValue(`variants.${index}.swatchImage`, reader.result);
                   reader.readAsDataURL(file);
-                }
-              }} 
+                }}} 
             />
 
             {/* Cropper appears only when a file is chosen */}
@@ -77,18 +122,39 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
                 <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">Swatch Set!</span>
               </div>
             )}
+
+            Print Variant Images
+            <input
+            type="file"
+            multiple
+            accept= "images/*"
+            className="text-xs"
+            onChange={(e)=>{
+                const newFiles = Array.from(e.target.files || []);
+                setValue(`variants.${index}.printImages`, newFiles)              
+            }}
+            />
+
+
           </div>
+          
+        
         </div>
       )}
 
       {/* 3. Common Gallery (Visible for both) */}
       <div className="flex flex-col gap-2 pt-2 border-t">
-        <label className="text-[10px] font-bold text-gray-500">VARIANT IMAGES (MODEL PHOTOS)</label>
-        <input type="file" multiple {...register(`variants.${index}.images`)} className="text-xs"
+        <label className="text-[10px] font-bold text-gray-500">VARIANT IMAGES (MODEL PHOTOS) </label>
+        <input
+        type="file"
+        multiple
+        {...register(`variants.${index}.images`)}
+        className="text-xs"
         onChange={(e) => {
         const newFiles = Array.from(e.target.files || []);
         setValue(`variants.${index}.images`, [...imageFiles, ...newFiles]);
     }}/>
+    
         
         {imageFiles && imageFiles.length > 0 && (
           <div className="grid grid-cols-3 gap-2 mt-1">
@@ -118,7 +184,7 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
 
       <div>
       {/* Step 2: dropdown */}
-      <select id="dropdown" value={selectedCategory || ""}
+      <select id={`category-select-${fieldId}`} value={selectedCategory || ""}
       onChange={(e) => setSelectedCategory(e.target.value)}
       className="border rounded px-2 py-1"
       >
@@ -138,9 +204,8 @@ const VariantItem = ({ index, control, register, remove, setValue, errors }) => 
           </h4>
           {Category_Map[selectedCategory].sizes.map((size, i) => {
               const stockValue = inventoryValue[i]?.stock; // safe lookup
-          
           return (
-          <div className="flex gap-2 justify-between flex-nowrap">
+          <div key={size} className="flex gap-2 justify-between flex-nowrap">
           <div key={size} className="flex-1 grid grid-cols-2 items-start gap-1">
           <label htmlFor={`stock-${index}-${i}`} >{size}</label>
           <div className="flex flex-col">
@@ -196,7 +261,7 @@ const ProductFrom = () => {
       gender: 'Unisex',
       variants: [{
         variantType: 'color',
-        hexValue: '#FFFFFF',
+        hexValue: '',
         printName: '',
         swatchImage: '',
         images: [],
@@ -217,15 +282,6 @@ const ProductFrom = () => {
     console.log("Form Data:", data);
   };
   
-  // Categories Map for Clothing Type
-  
-  const [selectedCategories, setSelectedCategories] = useState([]);
-
-  const handleCategoryChange = (updated) =>(
-    setSelectedCategories(updated)
-
-  )
-
   return (
     <div className="flex flex-col ml-10 mx-auto px-5 py-8 w-[45vw] border-2 rounded-lg bg-white shadow-xl">
       <h1 className="text-2xl font-bold text-center mb-6">Add a Product</h1>
@@ -233,12 +289,15 @@ const ProductFrom = () => {
         
         {/* Title */}
         <div className="flex flex-col gap-1">
-          <label className="font-bold text-gray-700">Title</label>
+          <label className="font-bold text-gray-700">Title
           <input 
-            {...register('title', { required: "Required", minLength: {value: 10, message: "Title has to be minimum 10 Characters Long"}})}
+            {...register('title', {
+              required: "Required", 
+              minLength: {value: 10, message: "Title has to be minimum 10 Characters Long"}})}
             className="border rounded-md p-2 w-full"
             placeholder="Product Title"
           />
+          </label>
           {errors.title && <span className="text-red-500 font-md text-sm">{errors.title.message}</span>}
         </div>
 
@@ -249,6 +308,7 @@ const ProductFrom = () => {
             {...register("description", { required: "Required", minLength: {value: 35, message: "Minimum 35 Characters long"}})}
             className="border p-2 rounded-md h-24"
           />
+          
           {errors.description && <span className="text-red-500 text-sm font-md">{errors.description.message}</span> }
         </div>
 
@@ -264,11 +324,14 @@ const ProductFrom = () => {
               className="border p-1 rounded" 
               onWheel={(e) => e.target.blur()}
               />
+              
               {errors.price && <span className="text-red-500 text-sm font-md ">{errors.price.message}</span> }
           </div>
           <div className="flex flex-col gap-1">
-            <label className="font-bold">Discount Type</label>
-            <select {...register("discount.discountType")}
+            <label htmlFor="discountType" className="font-bold">Discount Type</label>
+            <select
+            id="discountType"
+            {...register("discount.discountType")}
             className="border p-1 rounded">
               <option value="None">None</option>
               <option value="Percentage">Percentage</option>
@@ -282,21 +345,26 @@ const ProductFrom = () => {
         {/* Variants Loop */}
         <div className="mt-6">
           <h3 className="text-xl font-bold mb-4 border-b pb-2 text-blue-600">Product Variants</h3>
-          {fields.map((field, index) => (
+          {fields.map((field, index)=>(
             <VariantItem 
-              key={field.id} 
-              index={index} 
-              control={control} 
-              register={register} 
-              errors={errors} 
-              remove={remove}
-              setValue={setValue}
+            key={field.id}
+            fieldID={field.id}
+            index ={index}
+            control ={control}
+            register={register}
+            errors={errors}
+            remove={remove}
+            setValue={setValue}
             />
           ))}
 
           <button 
             type="button" 
-            onClick={() => append({ variantType: "color", hexValue: "#FFFFFF", images: [] })}
+            onClick={() => append({
+              variantType: "color",
+              hexValue: "#FFFFFF",
+              printName: '',
+              images: [] })}
             className="w-full py-3 border-2 border-dashed border-blue-400 text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-all"
           >
             + Add Another Variant
@@ -335,16 +403,21 @@ const ProductFrom = () => {
           </div>
           
           <div>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
                 {CategoryConfig.tags.map((tagGroup)=>(
-              <div key={tagGroup.title} className="flex flex-wrap">
-                <h3 className="font-bold">{tagGroup.title}</h3>
-                <div className="flex gap-2 flex-wrap">
+              <div key={tagGroup.title} className="mb-1">
+               <CategorySelector
+                title={tagGroup.title}
+                categories={tagGroup.values}
+                onChange={(updated)=> (`selected:`, updated)}
+                />
+                {/* <div className="flex gap-2 flex-wrap">
                   {tagGroup.values.map((value)=>(
                   <span key={value}
+                  onClick={()=> toggleSelector(value)}
                   className="border rounded-md px-2 mr-2">
                     {value}</span>))}
-                </div>
+                </div> */}
                 <hr/>
               </div>
             ))}
