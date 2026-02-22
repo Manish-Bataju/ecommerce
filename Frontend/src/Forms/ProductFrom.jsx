@@ -607,20 +607,12 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
           </div>
         ))}
       </div>
-
-      {/* Debugging: show live selected tags */}
-      <pre> {JSON.stringify(tags, null, 2)} </pre>
-
         <button 
           type="submit" 
           className="bg-green-600 text-white font-bold py-3 rounded-lg mt-4 hover:bg-green-700 shadow-lg"
         >
           Submit Product
         </button>
-
-        {/* this is for the fabric and tags section */}
-
-       
       </form>
     </div>
   );
