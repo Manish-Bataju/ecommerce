@@ -1,7 +1,7 @@
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import {SwatchCropper} from "../utility/SwatchCropper.jsx";
 import { Category_Map, CategoryConfig } from "../data/CategoryConfig.js";
-import { useRef, useState, useEffect} from "react";
+import { useRef, useState} from "react";
 import CategorySelector from "../Components/CategorySelector.jsx";
 
 const localDate = new Date().toLocaleDateString('en-CA');
@@ -9,6 +9,12 @@ const localDate = new Date().toLocaleDateString('en-CA');
 // 1. SUB-COMPONENT FOR EACH VARIANT
 
 function ColorVariantItem({ fieldId, index, control, register, remove, setValue, errors }){
+
+  const [selectedCategory, setSelectedCategory] = useState("")
+
+  const inventoryValue = useWatch({
+    control, name: `variants.color.${index}.inventory`
+  }) || [];
 
   const hexValue = useWatch({
     control, name: `variants.color.${index}.hexValue`
@@ -25,7 +31,7 @@ function ColorVariantItem({ fieldId, index, control, register, remove, setValue,
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-between">
-        <h4 className="text-xl font-bold mb-4 border-b pb-2 text-blue-600">Color Variant #{index+1}</h4>
+        <h4 className="text-xl font-bold text-blue-600">Color Variant #{index+1}</h4>
         <button type="button" onClick={() => remove(index)} className="text-red-500 text-xs font-bold uppercase">Remove</button>
       </div>
       <div className="bg-gray-400 border"></div>
@@ -80,37 +86,135 @@ function ColorVariantItem({ fieldId, index, control, register, remove, setValue,
             ))}
            </div>
 
-    
+            {/* Step 2: dropdown */}
+          <select
+          id={`category-select-${fieldId}`}
+          value={selectedCategory || ""}
+          onChange={(e) => {
+            const newCategory = e.target.value
+            setSelectedCategory(newCategory);
+
+            if(newCategory){
+              const sizes = Category_Map[newCategory].sizes;
+              setValue(`variants.color.${index}.inventory`,
+              sizes.map(size => ({size, stock:0}))
+              )
+            }
+          }}
+          className="border rounded px-2 py-1"
+          >
+            <option value="">Select Category</option>
+            {Object.entries(Category_Map).map(([key, group]) => (
+              <option key={key} value={key}>
+                {key} - {group.description}
+              </option>
+            ))}
+          </select>
+
+      {/* Step 3: render sizes only for selected category */}
+      {selectedCategory && (
+        <div className="mt-4">
+          <h4 className="font-bold text-sm">
+            {Category_Map[selectedCategory].description}
+          </h4>
+          {Category_Map[selectedCategory].sizes.map((size, i) => {
+              const stockValue = inventoryValue[i]?.stock; // safe lookup
+
+             
+          return (
+          <div key={size} className="flex gap-2 justify-between flex-nowrap">
+          <div className="flex-1 grid grid-cols-2 items-start gap-1">
+          <label htmlFor={`stock-${index}-${i}`} >{size}</label>
+          <div className="flex flex-col">
+              <input
+              id={`stock-color-${index}-${i}`}
+              type="number"
+              {...register(`variants.color.${index}.inventory.${i}.stock`, {
+                required: "Stock is required",
+                validate: (value) => {
+                  if (value === undefined || value === null || Number.isNaN(value)) {
+                    return "Stock is required"; 
+                  } if (value < 0) {
+                    return "Numbers can't be negative";
+                  } return true; }
+              })}
+              className={`border rounded px-1 cursor-pointer row-span-2 ${stockValue < 0 ? "border-red-500" : "border-gray-300"}`}
+            />
+            {errors?.variants?.color?.[index]?.inventory?.[i]?.stock && (
+              <span className="text-red-500 text-xs text-center col-span-2 ">
+            {errors.variants?.color?.[index].inventory?.[i]?.stock.message}
+              </span>
+            )}
+          </div>
+          
+          </div>
+          </div>
+
+        )})}
+
+        </div>
+      )}
     </div>
   )
 }
  
 function PrintVariantItem({ fieldId, index, control, register, remove, setValue, errors }){
 
-  const hexValue = useWatch({
-    control, name: `variants.print.${index}.hexValue`
-  }) || "";
+  const [selectedCategory, setSelectedCategory] = useState("")
+
+  const inventoryValue = useWatch({
+    control, name: `variants.print.${index}.inventory`
+  }) || [];
 
   const printImages = useWatch({
     control, name: `variants.print.${index}.printImages`
   }) || [];
 
-  const fileInputref = useRef(null);
+  const tempMasterImage = useWatch({
+    control, name:`variants.print.${index}.tempMasterImage`
+  }) || null;
 
-  // useEffect(() => { if (hexValue) { console.log("Hex value changed:", hexValue); } }, [hexValue]);
+  const swatchImage = useWatch({
+    control, name:`variants.print.${index}.swatchImage`
+  }) || "";
+
+  const fileInputref = useRef(null);
 
   return (
     <div className="flex flex-col gap-3">
       <div className="flex justify-between">
-        <h4 className="text-xl font-bold mb-4 border-b pb-2 text-blue-600">Print Variant #{index+1}</h4>
+        <h4 className="text-xl font-bold text-blue-600">Print Variant #{index+1}</h4>
         <button type="button" onClick={() => remove(index)} className="text-red-500 text-xs font-bold uppercase">Remove</button>
       </div>
+      
       <div className="bg-gray-400 border"></div>
 
-      <div className="flex gap-2">
-       <input {...register(`variants.print.${index}.hexValue`)} placeholder="Hex Code (#000000)" className="border p-2 rounded-md w-1/2 uppercase font-mono" />
-       <div className="w-10 h-10 rounded-full border shadow-sm whitespace-nowrap" style={{ backgroundColor: hexValue || '#eee' }} />
-      </div>
+      <input {...register(`variants.print.${index}.printName`)} placeholder="Print Name" className="border p-2 rounded" />
+
+       {/* Cropper appears only when a file is chosen */}
+            {tempMasterImage && (
+              <div className="mt-2">
+                <SwatchCropper 
+                    imageSrc={tempMasterImage} 
+                    onCropComplete={(croppedBase64) => {
+                      // Wrap this in a small timeout or ensure it's a simple state update
+                      // to prevent React from colliding with the cropper's internal state
+                      setValue(`variants.print.${index}.swatchImage`, croppedBase64);
+                      setValue(`variants.print.${index}.tempMasterImage`, null); 
+                    }} 
+                  />
+              </div>
+            )}
+
+            {/* Resulting Crop Preview */}
+            {swatchImage && !tempMasterImage && (
+              <div className="mt-2 flex items-center gap-2">
+                <img src={swatchImage} className="w-12 h-12 rounded-full border-2 border-white shadow" alt="Swatch" />
+                <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">Swatch Set!</span>
+              </div>
+            )}
+
+
       
        {/*Images Array */}
            <input
@@ -137,7 +241,7 @@ function PrintVariantItem({ fieldId, index, control, register, remove, setValue,
               {printImages.map((file, i)=>(
               <div key={i} className="relative w-20 h-20">
                  <img src={URL.createObjectURL(file)} className=" w-full h-full object-cover hover:scale-110"
-                 alt={`color variant ${i}`}/>
+                 alt={`Print variant ${i}`}/>
 
                {/* Delete button overlay */}
                 <button
@@ -145,7 +249,7 @@ function PrintVariantItem({ fieldId, index, control, register, remove, setValue,
                 className="absolute top-1 right-1 bg-red-600 text-white text-[10px] px-1 rounded"
                 onClick={() => {
                     const updated = printImages.filter((_, idx) => idx !== i);
-                    setValue(`variants.color.${index}.printImages`,updated, {shouldDirty: true});
+                    setValue(`variants.print.${index}.printImages`,updated, {shouldDirty: true});
                     if(fileInputref.current){
                       fileInputref.current.value = ""; 
                     }
@@ -157,48 +261,80 @@ function PrintVariantItem({ fieldId, index, control, register, remove, setValue,
             ))}
            </div>
 
+              {/* Inventory Section */}
+              {/* Step 2: dropdown */}
+          <select
+          id={`category-select-${fieldId}`}
+          value={selectedCategory || ""}
+          onChange={(e) => {
+            const newCategory = e.target.value
+            setSelectedCategory(newCategory);
+
+            if(newCategory){
+              const sizes = Category_Map[newCategory].sizes;
+              setValue(`variants.print.${index}.inventory`,
+              sizes.map(size => ({size, stock:0}))
+              )
+            }
+          }}
+          className="border rounded px-2 py-1"
+          >
+            <option value="">Select Category</option>
+            {Object.entries(Category_Map).map(([key, group]) => (
+              <option key={key} value={key}>
+                {key} - {group.description}
+              </option>
+            ))}
+          </select>
+              {/* Step 3: render sizes only for selected category */}
+          {selectedCategory && (
+        <div className="mt-4">
+          <h4 className="font-bold text-sm">
+            {Category_Map[selectedCategory].description}
+          </h4>
+          {Category_Map[selectedCategory].sizes.map((size, i) => {
+              const stockValue = inventoryValue[i]?.stock; // safe lookup
+
+             
+          return (
+          <div key={size} className="flex gap-2 justify-between flex-nowrap">
+          <div className="flex-1 grid grid-cols-2 items-start gap-1">
+          <label htmlFor={`stock-${index}-${i}`} >{size}</label>
+          <div className="flex flex-col">
+              <input
+              id={`stock-${index}-${i}`}
+              type="number"
+              {...register(`variants.print.${index}.inventory.${i}.stock`, {
+                required: "Stock is required",
+                validate: (value) => {
+                  if (value === undefined || value === null || Number.isNaN(value)) {
+                    return "Stock is required"; 
+                  } if (value < 0) {
+                    return "Numbers can't be negative";
+                  } return true; }
+              })}
+              className={`border rounded px-1 cursor-pointer row-span-2 ${stockValue < 0 ? "border-red-500" : "border-gray-300"}`}
+            />
+            {errors?.variants?.print?.[index]?.inventory?.[i]?.stock && (
+              <span className="text-red-500 text-xs text-center col-span-2 ">
+            {errors.variants?.print?.[index].inventory?.[i]?.stock.message}
+              </span>
+            )}
+          </div>
+          
+          </div>
+          </div>
+
+        )})}
+
+        </div>
+      )}
+
+
     
     </div>
   )
 }
-
-
-  
-
-//   return (
-//     <div key={fieldId} className="border p-4">
-//       <div className="flex justify-between ">
-//         <h4>Variant #{index+1}</h4>
-//         <button 
-//         type="button"
-//         onClick={()=> remove(index)}
-//         className="text-red-500 text-sm">X</button>
-//       </div>
-
-//       <div>
-//           {/* Dropdown module to select Color or Print */}
-//       <select
-//       onChange={(e)=>{
-//         if(e.target.value === "color"){
-//           appendColor({}); //adds a new variant to color
-//           } else if (e.target.value === "print"){
-//           appendPrint({}) //adds a new variants to print
-//           }
-//         }}
-//         name="" id="">
-//         <option value="">Select a Variant</option>
-//         <option value="color">Solid Color</option>
-//         <option value="print">Printed Fabric</option>
-//       </select>
-
-        
-//       </div>
-      
-//     </div>
-    
-//   );
-// };
-
 
 // 2. MAIN FORM COMPONENT
 const ProductFrom = () => {
@@ -218,10 +354,20 @@ const ProductFrom = () => {
       gender: 'Unisex',
       variants: {
         color: [{
-          hexValue:""
+          hexValue:"",
+          inventory:[{
+            size:"",
+            stock: 0
+          }]
         }],
         print: [{
-          hexValue:""
+          hexValue:"",
+          tempMasterImage: null,
+          swatchImage: "",
+          inventory:[{
+            size:"",
+            stock: 0
+          }]
         }]
       },
       fabric: 'Organic Cotton',
@@ -278,6 +424,47 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
           {errors.description && <span className="text-red-500 text-sm font-md">{errors.description.message}</span> }
         </div>
 
+        {/* Gender radio button */}
+        <div className="flex items-center gap-2">
+        <label htmlFor="gender">Gender:</label>
+        
+        <label htmlFor="gender" className="flex items-center gap-2">
+        <input
+        type="radio"
+        id="gender-unisex"
+        value="Unisex"
+         {...register("gender")}
+         defaultChecked
+         />
+         Unisex</label>
+         
+
+        <label htmlFor="gender" className="flex items-center gap-2">
+        <input
+        type="radio"
+        id="gender-boy"
+        value="Boy"
+        {...register("gender")}
+         />
+        Boy</label>
+        
+      
+        <label htmlFor="gender" className="flex items-center gap-2">
+        <input
+          type="radio"
+          id="gender-girl"
+          value="Girl"
+          {...register("gender")}
+          />
+        Girl
+        </label>
+        
+       
+        </div>
+        
+        
+        
+
         {/* Price & Discount Section */}
         <div className="grid grid-cols-2 gap-4 border p-3 rounded-md bg-gray-50">
           <div className="flex flex-col gap-1">
@@ -308,42 +495,7 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
           </div>
         </div>
 
-      <div className="border rounded-md px-5">
-              {/* Variants Loop */}
-        <div className="mt-6 flex flex-col gap-3">        
-        {colorFields.map((field, index) => (
-          <ColorVariantItem
-            key={field.id}
-            index={index}
-            register={register}
-            control={control}
-            remove={() => removeColor(index)}
-            setValue ={setValue}
-          />
-        ))}
-        <button
-        type="button"
-        onClick={() => appendColor({})}
-        className="text-gray-800 cursor-pointer text-center text-md border p-2 rounded-md transition-all hover:bg-red-400 hover:text-white hover:text-xl">Add Color Variant</button>
-
-        {/* border Line between color Variant and the Print variant */}
-        <div className="border-blue-600 border shadow-lg"></div>
-        {printFields.map((field, index) => (
-          <PrintVariantItem
-            key={field.id}
-            index={index}
-            register={register}
-            control={control}
-            remove={() => removePrint(index)}
-            setValue ={setValue}
-          />
-        ))}
-        <button type="button" onClick={() => appendPrint({})}>Add Print Variant</button>
-      </div>
-      </div>
-        
-
-
+        {/* Fabric & Clothing Category Section Section */}
           <div className="flex gap-3">
             <div>
               <h3 className="font-bold">{CategoryConfig.fabric.title}</h3>
@@ -358,6 +510,7 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
             ))}  
             </select>   
             </div>
+
             <div>
               <div>
               <h3 className="font-bold">{CategoryConfig.clothing.title}</h3>
@@ -374,7 +527,45 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
             </div>
             </div>
           </div>
-          
+
+        {/* Variation section */}
+        <div className="border rounded-md px-5">
+                {/* Variants Loop */}
+          <div className="mt-6 flex flex-col gap-3">        
+          {colorFields.map((field, index) => (
+            <ColorVariantItem
+              key={field.id}
+              fieldId={field.id}
+              index={index}
+              register={register}
+              control={control}
+              remove={() => removeColor(index)}
+              setValue ={setValue}
+            />
+          ))}
+          <button
+          type="button"
+          onClick={() => appendColor({})}
+          className="text-gray-800 cursor-pointer text-center text-md border p-2 rounded-md transition-all hover:bg-red-400 hover:text-white hover:text-xl">Add Color Variant</button>
+
+          {/* border Line between color Variant and the Print variant */}
+          <div className="border-blue-600 border shadow-lg"></div>
+          {printFields.map((field, index) => (
+            <PrintVariantItem
+              key={field.id}
+              fieldId={field.id}
+              index={index}
+              register={register}
+              control={control}
+              remove={() => removePrint(index)}
+              setValue ={setValue}
+            />
+          ))}
+          <button type="button" onClick={() => appendPrint({})}>Add Print Variant</button>
+        </div>
+        </div>   
+        
+          {/* Tags Mapped Section */}
           <div>
             <div className="flex flex-col gap-2">
                 {CategoryConfig.tags.map((tagGroup)=>(
@@ -395,7 +586,7 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
             ))}
             </div>
            
-            </div>  
+          </div>  
 
         <button 
           type="submit" 

@@ -45,7 +45,7 @@ const printVariantSchema = new mongoose.Schema({
             type: String, //an Array Full-size photos of the product in this print
             require: true
         }], 
-            swatchImage: {
+        swatchImage: {
         type: String, // URL to a tiny square crop of the actual fabric print
         required: [true, "A swatch image is required for the print Selector"]
         },
