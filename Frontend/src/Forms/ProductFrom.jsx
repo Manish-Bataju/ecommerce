@@ -1,4 +1,4 @@
-import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { useFieldArray, useForm, useWatch, Controller } from "react-hook-form";
 import {SwatchCropper} from "../utility/SwatchCropper.jsx";
 import { Category_Map, CategoryConfig } from "../data/CategoryConfig.js";
 import { useRef, useState} from "react";
@@ -124,7 +124,7 @@ function ColorVariantItem({ fieldId, index, control, register, remove, setValue,
           return (
           <div key={size} className="flex gap-2 justify-between flex-nowrap">
           <div className="flex-1 grid grid-cols-2 items-start gap-1">
-          <label htmlFor={`stock-${index}-${i}`} >{size}</label>
+          <label htmlFor={`stock-color-${index}-${i}`} >{size}</label>
           <div className="flex flex-col">
               <input
               id={`stock-color-${index}-${i}`}
@@ -160,6 +160,8 @@ function ColorVariantItem({ fieldId, index, control, register, remove, setValue,
  
 function PrintVariantItem({ fieldId, index, control, register, remove, setValue, errors }){
 
+  // const [isCropped, setIsCropped] = useState(false);
+
   const [selectedCategory, setSelectedCategory] = useState("")
 
   const inventoryValue = useWatch({
@@ -191,6 +193,23 @@ function PrintVariantItem({ fieldId, index, control, register, remove, setValue,
 
       <input {...register(`variants.print.${index}.printName`)} placeholder="Print Name" className="border p-2 rounded" />
 
+
+        <div className="bg-gray-100 p-2 rounded border-dashed border-2">
+            <p className="text-[10px] font-bold mb-2">FABRIC SWATCH</p>
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="text-xs"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if(file){
+                  const reader = new FileReader();
+                  reader.onload = () => setValue(`variants.print.${index}.tempMasterImage`, reader.result, {shouldDirty: true});
+                  reader.readAsDataURL(file);
+                }}} 
+            />
+                 
+
        {/* Cropper appears only when a file is chosen */}
             {tempMasterImage && (
               <div className="mt-2">
@@ -200,19 +219,20 @@ function PrintVariantItem({ fieldId, index, control, register, remove, setValue,
                       // Wrap this in a small timeout or ensure it's a simple state update
                       // to prevent React from colliding with the cropper's internal state
                       setValue(`variants.print.${index}.swatchImage`, croppedBase64);
-                      setValue(`variants.print.${index}.tempMasterImage`, null); 
+                      setValue(`variants.print.${index}.tempMasterImage`, null);
                     }} 
                   />
               </div>
             )}
 
             {/* Resulting Crop Preview */}
-            {swatchImage && !tempMasterImage && (
+            {swatchImage && (
               <div className="mt-2 flex items-center gap-2">
-                <img src={swatchImage} className="w-12 h-12 rounded-full border-2 border-white shadow" alt="Swatch" />
-                <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">Swatch Set!</span>
+              <img src={swatchImage} className="w-12 h-12 rounded-full border-2 border-white shadow" alt="Swatch" />
+              <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">Swatch Set!</span>
               </div>
             )}
+            </div>
 
 
       
@@ -376,6 +396,14 @@ const ProductFrom = () => {
       ageGroup: []
     }
   });
+
+  const tags =useWatch({
+    control, name: "tags" })
+
+  // const [tags, setTags] = useState({});
+
+  const [fabric, setFabric]=useState("");
+  const [clothing, setClothing]=useState("");
   
   const { fields: colorFields, append: appendColor, remove: removeColor } = useFieldArray({
   control,
@@ -415,8 +443,9 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
 
         {/* Description */}
         <div className="flex flex-col gap-1">
-          <label className="font-bold text-gray-700">Description</label>
+          <label htmlFor="description" className="font-bold text-gray-700">Description</label>
           <textarea
+          id="description"
             {...register("description", { required: "Required", minLength: {value: 35, message: "Minimum 35 Characters long"}})}
             className="border p-2 rounded-md h-24"
           />
@@ -426,9 +455,9 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
 
         {/* Gender radio button */}
         <div className="flex items-center gap-2">
-        <label htmlFor="gender">Gender:</label>
+        <h3 >Gender:</h3>
         
-        <label htmlFor="gender" className="flex items-center gap-2">
+        <label htmlFor="gender-unisex" className="flex items-center gap-2">
         <input
         type="radio"
         id="gender-unisex"
@@ -439,7 +468,7 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
          Unisex</label>
          
 
-        <label htmlFor="gender" className="flex items-center gap-2">
+        <label htmlFor="gender-boy" className="flex items-center gap-2">
         <input
         type="radio"
         id="gender-boy"
@@ -449,7 +478,7 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
         Boy</label>
         
       
-        <label htmlFor="gender" className="flex items-center gap-2">
+        <label htmlFor="gender-girl" className="flex items-center gap-2">
         <input
           type="radio"
           id="gender-girl"
@@ -461,15 +490,13 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
         
        
         </div>
-        
-        
-        
 
         {/* Price & Discount Section */}
         <div className="grid grid-cols-2 gap-4 border p-3 rounded-md bg-gray-50">
           <div className="flex flex-col gap-1">
-            <label className="font-bold">Price</label>
+            <label htmlFor="price" className="font-bold">Price</label>
             <input 
+            id="price"
               type="number" 
               {...register("price", {
                 min: {value: 0, message: "Price can not be negative"}
@@ -502,7 +529,9 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
             <select
             name="fabric"
             id="fabric"
-            className="border rounded-md shadow-xs px-2 py-1">
+            onChange={(e)=>setFabric(e.target.value)}
+            className="border rounded-md shadow-xs px-2 py-1"
+            {...register("fabric")}>
             {CategoryConfig.fabric.values.map((value)=>(
                 <option key={value} value={value}>
                 {value}
@@ -517,7 +546,9 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
               <select
               name="clothing"
               id="clothing"
-              className="border rounded-md shadow-xs px-2 py-1 ">
+              onChange={(e)=>setClothing(e.target.value)}
+              className="border rounded-md shadow-xs px-2 py-1 "
+              {...register("clothingCategory")}>
               {CategoryConfig.clothing.values.map((value)=>(
                   <option key={value} value={value}>
                   {value}
@@ -566,27 +597,19 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
         </div>   
         
           {/* Tags Mapped Section */}
-          <div>
-            <div className="flex flex-col gap-2">
-                {CategoryConfig.tags.map((tagGroup)=>(
-              <div key={tagGroup.title} className="mb-1">
-               <CategorySelector
-                title={tagGroup.title}
-                categories={tagGroup.values}
-                onChange={(updated)=> (`selected:`, updated)}
-                />
-                {/* <div className="flex gap-2 flex-wrap">
-                  {tagGroup.values.map((value)=>(
-                  <span key={value}
-                  onClick={()=> toggleSelector(value)}
-                  className="border rounded-md px-2 mr-2">
-                    {value}</span>))}
-                </div> */}
-              </div>
-            ))}
-            </div>
-           
-          </div>  
+          <div className="flex flex-col gap-2">
+          {CategoryConfig.tags.map((tagGroup) => (
+          <div key={tagGroup.title} className="mb-1">
+            <CategorySelector title={tagGroup.title} categories={tagGroup.values} onChange={(updated) => {
+                setValue(`tags.${tagGroup.title}`, updated, { shouldDirty: true });
+              }}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Debugging: show live selected tags */}
+      <pre> {JSON.stringify(tags, null, 2)} </pre>
 
         <button 
           type="submit" 
