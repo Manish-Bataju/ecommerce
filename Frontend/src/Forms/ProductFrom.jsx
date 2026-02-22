@@ -1,62 +1,65 @@
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import {SwatchCropper} from "../utility/SwatchCropper.jsx";
 import { Category_Map, CategoryConfig } from "../data/CategoryConfig.js";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect} from "react";
 import CategorySelector from "../Components/CategorySelector.jsx";
 
 const localDate = new Date().toLocaleDateString('en-CA');
 
 // 1. SUB-COMPONENT FOR EACH VARIANT
-const VariantItem = ({ fieldId, index, control, register, remove, setValue, errors }) => {
-  const variantType = useWatch({ control, name: `variants.${index}.variantType`, defaultValue: "color" });
-  const hexValue = useWatch({ control, name: `variants.${index}.hexValue` });
-  const swatchImage = useWatch({ control, name: `variants.${index}.swatchImage` });
-  const tempMasterImage = useWatch({ control, name: `variants.${index}.tempMasterImage` });
-  const imageFiles = useWatch({ control, name: `variants.${index}.images` }) || [];
-  const colorImages = useWatch({ control, name: `variants.${index}.colorImages` }) || [];
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const inventoryValue = useWatch({ control, name: `variants.${index}.inventory`}) || [];
+
+function ColorVariantItem({ fieldId, index, control, register, remove, setValue, errors }){
+
+  const hexValue = useWatch({
+    control, name: `variants.color.${index}.hexValue`
+  }) || "";
+
+  const colorImages = useWatch({
+    control, name: `variants.color.${index}.colorImages`
+  }) || [];
 
   const fileInputref = useRef(null);
 
+  // useEffect(() => { if (hexValue) { console.log("Hex value changed:", hexValue); } }, [hexValue]);
+
   return (
-    <div className="border p-4 rounded-lg bg-gray-50 mb-6 flex flex-col gap-4">
-      {/* 1. Header & Type Selector */}
-      <div className="flex justify-between items-center border-b pb-2">
-        <h4 className="font-bold text-gray-700">Variant #{index + 1}</h4>
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-between">
+        <h4 className="text-xl font-bold mb-4 border-b pb-2 text-blue-600">Color Variant #{index+1}</h4>
         <button type="button" onClick={() => remove(index)} className="text-red-500 text-xs font-bold uppercase">Remove</button>
       </div>
+      <div className="bg-gray-400 border"></div>
 
-      <select {...register(`variants.${index}.variantType`)} className="border p-2 w-1/3 rounded-md bg-white relative">
-        <option value="color">Solid Color</option>
-        <option value="printed">Printed Fabric</option>
-      </select>
-
-      {/* 2. Logic Switch */}
-      {variantType === "color" ? (
-        <div className="flex flex-col gap-4 p-3 bg-white border rounded ">
-          <div className="flex gap-2">
-           <input {...register(`variants.${index}.hexValue`)} placeholder="Hex Code (#000000)" className="border p-2 rounded-md w-1/2 uppercase font-mono" />
-           <div className="w-10 h-10 rounded-full border shadow-sm whitespace-nowrap" style={{ backgroundColor: hexValue || '#eee' }} />
-          </div>
-          
-          {/* Color Variant */}
+      <div className="flex gap-2">
+       <input {...register(`variants.color.${index}.hexValue`)} placeholder="Hex Code (#000000)" className="border p-2 rounded-md w-1/2 uppercase font-mono" />
+       <div className="w-10 h-10 rounded-full border shadow-sm whitespace-nowrap" style={{ backgroundColor: hexValue || '#eee' }} />
+      </div>
+      
+       {/*Images Array */}
            <input
            ref={fileInputref}
            type='file'
            multiple
-           accept= "images/*"
+           style={{display: "none"}}
+           accept= "image/*"
+           className="mt-4"
            onChange={(e)=>{
            const newFiles = Array.from(e.target.files || []);
-           setValue(`variants.${index}.colorImages`, newFiles)
+            // Merge old files with new ones..
+           const updatedFiles = [...(colorImages || []), ...newFiles]
+           setValue(`variants.color.${index}.colorImages`, updatedFiles, {shouldDirty: true});
            }}
            />
+            <div className="flex gap-2 items-center ">
+            <button onClick={()=> fileInputref.current?.click()} className="border px-2 py-1 rounded-md">Upload Images</button>
+            <div>{colorImages.length === 0? "No files selected" : `${colorImages.length} files selected`}</div>
+            </div>
 
-           {/* Displaying those images stored in the variants */}
+            {/* Displaying those images stored in the variants */}
            <div className="flex gap-2 flex-wrap">
               {colorImages.map((file, i)=>(
               <div key={i} className="relative w-20 h-20">
-                 <img src={URL.createObjectURL(file)} className=" w-full h-full object-cover"
+                 <img src={URL.createObjectURL(file)} className=" w-full h-full object-cover hover:scale-110"
                  alt={`color variant ${i}`}/>
 
                {/* Delete button overlay */}
@@ -65,7 +68,7 @@ const VariantItem = ({ fieldId, index, control, register, remove, setValue, erro
                 className="absolute top-1 right-1 bg-red-600 text-white text-[10px] px-1 rounded"
                 onClick={() => {
                     const updated = colorImages.filter((_, idx) => idx !== i);
-                    setValue(`variants.${index}.colorImages`,updated, {shouldDirty: true});
+                    setValue(`variants.color.${index}.colorImages`,updated, {shouldDirty: true});
                     if(fileInputref.current){
                       fileInputref.current.value = ""; 
                     }
@@ -75,172 +78,126 @@ const VariantItem = ({ fieldId, index, control, register, remove, setValue, erro
                 </button>
             </div>
             ))}
-
-           
            </div>
-        </div>
 
-
-      ) : (
-        <div className="p-3 bg-white border rounded flex flex-col gap-3">
-          <input {...register(`variants.${index}.printName`)} placeholder="Print Name" className="border p-2 rounded" />
-          
-          <div className="bg-gray-100 p-2 rounded border-dashed border-2">
-            <p className="text-[10px] font-bold mb-2">FABRIC SWATCH</p>
-            <input 
-              type="file" 
-              accept="image/*" 
-              className="text-xs"
-              onChange={(e) => {
-                const file = e.target.files;
-                if(file){
-                  const reader = new FileReader();
-                  reader.onload = () => setValue(`variants.${index}.swatchImage`, reader.result);
-                  reader.readAsDataURL(file);
-                }}} 
-            />
-
-            {/* Cropper appears only when a file is chosen */}
-            {tempMasterImage && (
-              <div className="mt-2">
-                <SwatchCropper 
-                    imageSrc={tempMasterImage} 
-                    onCropComplete={(croppedBase64) => {
-                      // Wrap this in a small timeout or ensure it's a simple state update
-                      // to prevent React from colliding with the cropper's internal state
-                      setValue(`variants.${index}.swatchImage`, croppedBase64);
-                      setValue(`variants.${index}.tempMasterImage`, null); 
-                    }} 
-                  />
-              </div>
-            )}
-
-            {/* Resulting Crop Preview */}
-            {swatchImage && !tempMasterImage && (
-              <div className="mt-2 flex items-center gap-2">
-                <img src={swatchImage} className="w-12 h-12 rounded-full border-2 border-white shadow" alt="Swatch" />
-                <span className="text-[10px] text-green-600 font-bold uppercase tracking-tighter">Swatch Set!</span>
-              </div>
-            )}
-
-            Print Variant Images
-            <input
-            type="file"
-            multiple
-            accept= "images/*"
-            className="text-xs"
-            onChange={(e)=>{
-                const newFiles = Array.from(e.target.files || []);
-                setValue(`variants.${index}.printImages`, newFiles)              
-            }}
-            />
-
-
-          </div>
-          
-        
-        </div>
-      )}
-
-      {/* 3. Common Gallery (Visible for both) */}
-      <div className="flex flex-col gap-2 pt-2 border-t">
-        <label className="text-[10px] font-bold text-gray-500">VARIANT IMAGES (MODEL PHOTOS) </label>
-        <input
-        type="file"
-        multiple
-        {...register(`variants.${index}.images`)}
-        className="text-xs"
-        onChange={(e) => {
-        const newFiles = Array.from(e.target.files || []);
-        setValue(`variants.${index}.images`, [...imageFiles, ...newFiles]);
-    }}/>
     
-        
-        {imageFiles && imageFiles.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mt-1">
-            {Array.from(imageFiles).map((file, i) => (
-              <div key={i}
-                   className="relative aspect-square rounded overflow-hidden border">
-                <img
-                  src={URL.createObjectURL(file)}
-                  className="w-full h-full object-cover" />
+    </div>
+  )
+}
+ 
+function PrintVariantItem({ fieldId, index, control, register, remove, setValue, errors }){
 
-                {/* Delete button overlay */}
+  const hexValue = useWatch({
+    control, name: `variants.print.${index}.hexValue`
+  }) || "";
+
+  const printImages = useWatch({
+    control, name: `variants.print.${index}.printImages`
+  }) || [];
+
+  const fileInputref = useRef(null);
+
+  // useEffect(() => { if (hexValue) { console.log("Hex value changed:", hexValue); } }, [hexValue]);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-between">
+        <h4 className="text-xl font-bold mb-4 border-b pb-2 text-blue-600">Print Variant #{index+1}</h4>
+        <button type="button" onClick={() => remove(index)} className="text-red-500 text-xs font-bold uppercase">Remove</button>
+      </div>
+      <div className="bg-gray-400 border"></div>
+
+      <div className="flex gap-2">
+       <input {...register(`variants.print.${index}.hexValue`)} placeholder="Hex Code (#000000)" className="border p-2 rounded-md w-1/2 uppercase font-mono" />
+       <div className="w-10 h-10 rounded-full border shadow-sm whitespace-nowrap" style={{ backgroundColor: hexValue || '#eee' }} />
+      </div>
+      
+       {/*Images Array */}
+           <input
+           ref={fileInputref}
+           type='file'
+           multiple
+           style={{display: "none"}}
+           accept= "image/*"
+           className="mt-4"
+           onChange={(e)=>{
+           const newFiles = Array.from(e.target.files || []);
+            // Merge old files with new ones..
+           const updatedFiles = [...(printImages || []), ...newFiles]
+           setValue(`variants.print.${index}.printImages`, updatedFiles, {shouldDirty: true});
+           }}
+           />
+            <div className="flex gap-2 items-center ">
+            <button onClick={()=> fileInputref.current?.click()} className="border px-2 py-1 rounded-md">Upload Images</button>
+            <div>{printImages.length === 0? "No files selected" : `${printImages.length} files selected`}</div>
+            </div>
+
+            {/* Displaying those images stored in the variants */}
+           <div className="flex gap-2 flex-wrap">
+              {printImages.map((file, i)=>(
+              <div key={i} className="relative w-20 h-20">
+                 <img src={URL.createObjectURL(file)} className=" w-full h-full object-cover hover:scale-110"
+                 alt={`color variant ${i}`}/>
+
+               {/* Delete button overlay */}
                 <button
                 type="button"
                 className="absolute top-1 right-1 bg-red-600 text-white text-[10px] px-1 rounded"
                 onClick={() => {
-                    const updated = imageFiles.filter((_, idx) => idx !== i);
-                    setValue(`variants.${index}.images`, updated);
+                    const updated = printImages.filter((_, idx) => idx !== i);
+                    setValue(`variants.color.${index}.printImages`,updated, {shouldDirty: true});
+                    if(fileInputref.current){
+                      fileInputref.current.value = ""; 
+                    }
                   }}
                 >
                   ✕
                 </button>
-              </div>
+            </div>
             ))}
-          </div>
-        )}
-      </div>
+           </div>
 
-      <div>
-      {/* Step 2: dropdown */}
-      <select id={`category-select-${fieldId}`} value={selectedCategory || ""}
-      onChange={(e) => setSelectedCategory(e.target.value)}
-      className="border rounded px-2 py-1"
-      >
-        <option value="">Select Category</option>
-        {Object.entries(Category_Map).map(([key, group]) => (
-          <option key={key} value={key}>
-            {key} - {group.description}
-          </option>
-        ))}
-      </select>
-
-      {/* Step 3: render sizes only for selected category */}
-      {selectedCategory && (
-        <div className="mt-4">
-          <h4 className="font-bold text-sm">
-            {Category_Map[selectedCategory].description}
-          </h4>
-          {Category_Map[selectedCategory].sizes.map((size, i) => {
-              const stockValue = inventoryValue[i]?.stock; // safe lookup
-          return (
-          <div key={size} className="flex gap-2 justify-between flex-nowrap">
-          <div key={size} className="flex-1 grid grid-cols-2 items-start gap-1">
-          <label htmlFor={`stock-${index}-${i}`} >{size}</label>
-          <div className="flex flex-col">
-              <input
-              id={`stock-${index}-${i}`}
-              type="number"
-              {...register(`variants.${index}.inventory.${i}.stock`, {
-                required: "Stock is required",
-                validate: (value) => {
-                  if (value === undefined || value === null || Number.isNaN(value)) {
-                    return "Stock is required"; 
-                  } if (value < 0) {
-                    return "Numbers can't be negative";
-                  } return true; }
-              })}
-              className={`border rounded px-1 cursor-pointer row-span-2 ${stockValue < 0 ? "border-red-500" : "border-gray-300"}`}
-            />
-            {errors?.variants?.[index]?.inventory?.[i]?.stock && (
-              <span className="text-red-500 text-xs text-center col-span-2 ">
-                {errors.variants?.[index].inventory?.[i]?.stock.message}
-              </span>
-            )}
-          </div>
-          
-          </div>
-          </div>
-
-        )})}
-
-        </div>
-      )}
+    
     </div>
-      </div>
-  );
-};
+  )
+}
+
+
+  
+
+//   return (
+//     <div key={fieldId} className="border p-4">
+//       <div className="flex justify-between ">
+//         <h4>Variant #{index+1}</h4>
+//         <button 
+//         type="button"
+//         onClick={()=> remove(index)}
+//         className="text-red-500 text-sm">X</button>
+//       </div>
+
+//       <div>
+//           {/* Dropdown module to select Color or Print */}
+//       <select
+//       onChange={(e)=>{
+//         if(e.target.value === "color"){
+//           appendColor({}); //adds a new variant to color
+//           } else if (e.target.value === "print"){
+//           appendPrint({}) //adds a new variants to print
+//           }
+//         }}
+//         name="" id="">
+//         <option value="">Select a Variant</option>
+//         <option value="color">Solid Color</option>
+//         <option value="print">Printed Fabric</option>
+//       </select>
+
+        
+//       </div>
+      
+//     </div>
+    
+//   );
+// };
 
 
 // 2. MAIN FORM COMPONENT
@@ -259,22 +216,31 @@ const ProductFrom = () => {
         endDate: localDate,
       },
       gender: 'Unisex',
-      variants: [{
-        variantType: 'color',
-        hexValue: '',
-        printName: '',
-        swatchImage: '',
-        images: [],
-        inventory: [{ size: 'New Born', stock: 0 }]
-      }],
+      variants: {
+        color: [{
+          hexValue:""
+        }],
+        print: [{
+          hexValue:""
+        }]
+      },
       fabric: 'Organic Cotton',
       clothingCategory: 'Tops',
       tags: [],
       ageGroup: []
     }
   });
+  
+  const { fields: colorFields, append: appendColor, remove: removeColor } = useFieldArray({
+  control,
+  name: "variants.color"   // array for color variants
+});
 
-  const { fields, append, remove } = useFieldArray({ control, name: "variants" });
+const { fields: printFields, append: appendPrint, remove: removePrint } = useFieldArray({
+  control,
+  name: "variants.print"   // array for print variants
+});
+
 
   // const discountType = useWatch({ control, name: "discount.discountType" });
 
@@ -342,34 +308,41 @@ const ProductFrom = () => {
           </div>
         </div>
 
-        {/* Variants Loop */}
-        <div className="mt-6">
-          <h3 className="text-xl font-bold mb-4 border-b pb-2 text-blue-600">Product Variants</h3>
-          {fields.map((field, index)=>(
-            <VariantItem 
+      <div className="border rounded-md px-5">
+              {/* Variants Loop */}
+        <div className="mt-6 flex flex-col gap-3">        
+        {colorFields.map((field, index) => (
+          <ColorVariantItem
             key={field.id}
-            fieldID={field.id}
-            index ={index}
-            control ={control}
+            index={index}
             register={register}
-            errors={errors}
-            remove={remove}
-            setValue={setValue}
-            />
-          ))}
+            control={control}
+            remove={() => removeColor(index)}
+            setValue ={setValue}
+          />
+        ))}
+        <button
+        type="button"
+        onClick={() => appendColor({})}
+        className="text-gray-800 cursor-pointer text-center text-md border p-2 rounded-md transition-all hover:bg-red-400 hover:text-white hover:text-xl">Add Color Variant</button>
 
-          <button 
-            type="button" 
-            onClick={() => append({
-              variantType: "color",
-              hexValue: "#FFFFFF",
-              printName: '',
-              images: [] })}
-            className="w-full py-3 border-2 border-dashed border-blue-400 text-blue-600 rounded-lg font-bold hover:bg-blue-50 transition-all"
-          >
-            + Add Another Variant
-          </button>
-        </div>
+        {/* border Line between color Variant and the Print variant */}
+        <div className="border-blue-600 border shadow-lg"></div>
+        {printFields.map((field, index) => (
+          <PrintVariantItem
+            key={field.id}
+            index={index}
+            register={register}
+            control={control}
+            remove={() => removePrint(index)}
+            setValue ={setValue}
+          />
+        ))}
+        <button type="button" onClick={() => appendPrint({})}>Add Print Variant</button>
+      </div>
+      </div>
+        
+
 
           <div className="flex gap-3">
             <div>
@@ -418,7 +391,6 @@ const ProductFrom = () => {
                   className="border rounded-md px-2 mr-2">
                     {value}</span>))}
                 </div> */}
-                <hr/>
               </div>
             ))}
             </div>

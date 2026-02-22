@@ -3,46 +3,9 @@ import badgeAssets from "../Utils/badgeAssets.js";
 import { Category_Map } from "../../Frontend/src/data/CategoryConfig.js";
 import { Clothing_Category_Enum, Fabric_Category_Enum, Product_Tag_Enum } from "../../Shared/enums.js";
 
-const variantSchema = new mongoose.Schema({
-    variantType:{
-        type: String,
-        enum:['color', 'printed'],
-        required: [true, "Variant type must be specified"]
-    },
 
-    // for color variants
-    hexValue:{
-        type:String,
-        match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
-        required: function(){
-            return this.variantType === 'color';
-        }
-    },
-    colorImages: [{
-        type: String, //an Array Full-size photos of the product in solid color
-        required: function(){
-            return this.variantType ==='color';
-        }
-    }],   
-  printName: {
-    type: String, // e.g., "Vintage Meadow" or "Blue Stripe",
-    trim: true,
-    required: function(){
-        return this.variantType === 'printed';
-    }
-    },
-    printImages: [{
-        type: String, //an Array Full-size photos of the product in this print
-        required: function(){
-            return this.variantType ==='printed';
-        }
-    }],   
-        swatchImage: {
-    type: String, // URL to a tiny square crop of the actual fabric print
-    required: [true, "A swatch image is required for the print Selector"]
-    },
-  inventory: [{ 
-        size: {
+const inventorySchema = new mongoose.Schema({
+    size: {
             type: String,
             required: true,
             enum: [
@@ -58,7 +21,35 @@ const variantSchema = new mongoose.Schema({
             required: true,
             min: [0, "Stock cannot be negative"],
             default: 0
-        }}]
+        }
+})
+const colorVariantSchema = new mongoose.Schema({
+        hexValue:{
+        type:String,
+        match: /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/,
+        },
+    colorImages: [{
+        type: String, //an Array Full-size photos of the product in solid color
+        required: true,
+    }],
+    inventory: [inventorySchema]
+
+});
+
+const printVariantSchema = new mongoose.Schema({    
+        printName: {
+        type: String, // e.g., "Vintage Meadow" or "Blue Stripe",
+        trim: true,
+        },
+        printImages: [{
+            type: String, //an Array Full-size photos of the product in this print
+            require: true
+        }], 
+            swatchImage: {
+        type: String, // URL to a tiny square crop of the actual fabric print
+        required: [true, "A swatch image is required for the print Selector"]
+        },
+        inventory: [inventorySchema]
 });
 
 const productSchema = new mongoose.Schema({
@@ -73,7 +64,6 @@ const productSchema = new mongoose.Schema({
     description: {
         type: String,
         required: [true," A product name must have a description"],
-        minLength: [10, "Description must be at least 100 characters long"],
         trim: true,
     },
     brand:{
@@ -116,15 +106,18 @@ const productSchema = new mongoose.Schema({
         required: [true, " Gender is must"],
         enum: ['Boy', 'Girl', 'Unisex'],
     },
-    variants: [variantSchema],
+    variants: {
+        color: [colorVariantSchema],
+        print: [printVariantSchema]
+             },
     fabric: {
-    type: String,
-    required: [true, "A product must have a fabric type defined"],
-    enum: {
-      values: Fabric_Category_Enum,
-      message: '{VALUE} is not a supported fabric type'
-          }
-    },
+        type: String,
+        required: [true, "A product must have a fabric type defined"],
+        enum: {
+        values: Fabric_Category_Enum,
+        message: '{VALUE} is not a supported fabric type'
+            }
+        },
     clothingCategory:{
         type: String,
         required: [true, " Category is must"],
