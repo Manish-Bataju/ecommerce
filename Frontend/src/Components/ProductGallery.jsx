@@ -23,9 +23,11 @@ const ProductGallery = ({categoryTitle, ageGroup}) => {
         if(!ageGroup){
             setProducts(allData); //Show all for Shop/Store.
         } else {
-            const targetSizes = Category_Map[ageGroup.toLowerCase()];
+            const targetSizes = Category_Map[ageGroup];
 
-            const filtered = allData.filter(product => product.inventory.some(item => targetSizes.includes(item.size)));
+            const filtered = allData.filter(product => product.variants.color.some(variant=> variant.inventory.some(item=> targetSizes.sizes.includes(item.size))) || 
+
+            product.variants.print.some(variant=> variant.inventory.some(item=> targetSizes.sizes.includes(item.size))));
 
             setProducts(filtered);
         }

@@ -141,6 +141,12 @@ const productSchema = new mongoose.Schema({
         lowercase: true,
         trim: true,
     },
+        ageGroup: {
+        type: String,
+        enum: ["Baby", "Tots", "Junior", "Kids", "Teen"],
+        required: true
+    },
+
 
     //Social Engagement
     likes: {

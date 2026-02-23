@@ -456,7 +456,8 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
           
           {errors.description && <span className="text-red-500 text-sm font-md">{errors.description.message}</span> }
         </div>
-
+        
+        <div className="flex justify-between">
         {/* Gender radio button */}
         <div className="flex items-center gap-2">
         <h3 >Gender:</h3>
@@ -494,6 +495,26 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
         
        
         </div>
+       
+        {/* select ageGroup */}
+        <div className="flex gap-2">
+          <h3 className="text-red-500">Age group</h3>
+          <select
+          id="ageGroup"
+          {...register("ageGroup", {
+            required: "Age Group is Required",
+          })}>
+            <option value="select an age group"> Select an Age Group </option>
+            {Object.entries(Category_Map).map(([key])=>(
+              <option key={key} value={key}>
+                {key}</option>
+            ))}
+            
+          </select>
+        </div>
+        </div>
+        
+       
 
         {/* Price & Discount Section */}
         <div className="grid grid-cols-2 gap-4 border p-3 rounded-md bg-gray-50">

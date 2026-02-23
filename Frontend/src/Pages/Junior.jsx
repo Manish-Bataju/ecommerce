@@ -5,7 +5,7 @@ const Junior = () => {
   return (
     <div>
       {/* We call the gallery and tell it which ageGroup to filter for */}
-    <ProductGallery categoryTitle="Junior" ageGroup="junior"/>
+    <ProductGallery categoryTitle="Junior" ageGroup="Junior"/>
     </div>
   )
 }
