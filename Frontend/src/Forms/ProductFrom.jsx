@@ -3,12 +3,16 @@ import {SwatchCropper} from "../utility/SwatchCropper.jsx";
 import { Category_Map, CategoryConfig } from "../data/CategoryConfig.js";
 import { useRef, useState} from "react";
 import CategorySelector from "../Components/CategorySelector.jsx";
+import { get } from "react-hook-form";
 
 const localDate = new Date().toLocaleDateString('en-CA');
 
 // 1. SUB-COMPONENT FOR EACH VARIANT
 
 function ColorVariantItem({ fieldId, index, control, register, remove, setValue, errors }){
+  
+  // Note: stockError definition removed as 'i' is not available in this scope
+
 
   const [selectedCategory, setSelectedCategory] = useState("")
 
@@ -113,19 +117,21 @@ function ColorVariantItem({ fieldId, index, control, register, remove, setValue,
 
       {/* Step 3: render sizes only for selected category */}
       {selectedCategory && (
-        <div className="mt-4">
+        <div className="flex flex-col gap-4 mt-4">
           <h4 className="font-bold text-sm">
             {Category_Map[selectedCategory].description}
           </h4>
           {Category_Map[selectedCategory].sizes.map((size, i) => {
-              const stockValue = inventoryValue[i]?.stock; // safe lookup
-
+              const stockValue = inventoryValue[i]?.stock;
+              const fieldPath = `variants.color.${index}.inventory.${i}.stock`;
+              const stockError = get(errors, fieldPath);// safe lookup
+              
              
           return (
           <div key={size} className="flex gap-2 justify-between flex-nowrap">
           <div className="flex-1 grid grid-cols-2 items-start gap-1">
           <label htmlFor={`stock-color-${index}-${i}`} >{size}</label>
-          <div className="flex flex-col">
+          <div className="flex flex-col ">
               <input
               id={`stock-color-${index}-${i}`}
               type="number"
@@ -138,13 +144,9 @@ function ColorVariantItem({ fieldId, index, control, register, remove, setValue,
                     return "Numbers can't be negative";
                   } return true; }
               })}
-              className={`border rounded px-1 cursor-pointer row-span-2 ${stockValue < 0 ? "border-red-500" : "border-gray-300"}`}
+              className={`border rounded-md px-2 cursor-pointer ${stockValue < 0 ? "border-red-500" : "border-gray-300"}`}
             />
-            {errors?.variants?.color?.[index]?.inventory?.[i]?.stock && (
-              <span className="text-red-500 text-xs text-center col-span-2 ">
-            {errors.variants?.color?.[index].inventory?.[i]?.stock.message}
-              </span>
-            )}
+           {stockError?.message && <span className="text-red-500 text-sm shadow-md">{stockError.message}</span>}
           </div>
           
           </div>
@@ -397,6 +399,8 @@ const ProductFrom = () => {
     }
   });
 
+  console.log("Errors:", errors);
+
   const tags =useWatch({
     control, name: "tags" })
 
@@ -592,8 +596,11 @@ const { fields: printFields, append: appendPrint, remove: removePrint } = useFie
               setValue ={setValue}
             />
           ))}
-          <button type="button" onClick={() => appendPrint({})}>Add Print Variant</button>
-        </div>
+          <button
+          type="button"
+          onClick={() => appendPrint({})}
+          className="text-gray-800 cursor-pointer text-center text-md border p-2 rounded-md transition-all hover:bg-red-400 hover:text-white hover:text-xl">Add Print Variant</button>
+        </div>"
         </div>   
         
           {/* Tags Mapped Section */}
